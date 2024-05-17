@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.groupware.mapper.documents.IDocumentsMapper">
+
+	<resultMap type="documentsVO" id="documentsMap">
+		<id property="id" column="id" />
+	    <result property="text" column="text" />
+	    <result property="docCn" column="doc_cn" />
+	    <result property="parent" column="parent" />
+	    
+	</resultMap>
+
+	<select id="selectDocumentsList" resultType="documentsVO">
+		select
+			doc_no
+			, doc_nm
+            , doc_type_code
+			, cmmn_code_name1 as doc_type_nm
+			, d.use_yn
+			, doc_register
+			, doc_rgdde
+			, doc_updusr
+			, doc_updde
+		from documents d
+        left outer join comm_code c on (c.cmmn_code = d.doc_type_code)
+        where d.use_yn = 'Y'
+	</select>
+	
+	<insert id="insertDocform" parameterType="documentsVO">
+		<selectKey keyProperty="docNo" resultType="int" order="BEFORE">
+        	SELECT SEQ_DOC.nextval FROM dual
+    	</selectKey>
+    	
+	    INSERT INTO documents (
+	        doc_no
+	        , doc_nm
+	        , doc_cn
+	        , doc_type_code
+	        , doc_register
+	        , doc_updusr
+	        , doc_rgdde
+	        , use_yn
+	        , doc_code_no
+	    ) VALUES (
+	        #{docNo}
+	      , #{docNm}
+	      , #{docCn}
+	      , #{docTypeCode}
+	      , #{docRegister}
+	      , #{docUpdusr}
+	      , sysdate
+	      , #{useYn}
+	      , 'TL' || TO_CHAR(sysdate, 'YYYY') || LPAD(seq_documents_number.nextval, 4, '0')
+	    )
+	</insert>
+	
+	<select id="selectDocList" resultType="documentsVO">
+		SELECT id, 
+       text, 
+       CASE WHEN id LIKE 'F%' THEN '#' ELSE parent END AS parent,
+       e.empl_nm,
+       use_yn,
+       doc_code_no
+		FROM (
+		    SELECT cmmn_code id,  
+		           cmmn_code_name1 text, 
+		           NULL AS doc_cn, 
+		           cmmn_code AS parent,
+		           NULL AS doc_updusr,
+		           NULL AS use_yn,
+		           NULL AS doc_code_no
+		    FROM comm_code
+		    WHERE cmmn_group_code LIKE '%' || 'F' || '%'
+		    UNION ALL
+		    SELECT TO_CHAR(doc_no) id, 
+		           doc_nm text, 
+		           doc_cn, 
+		           doc_type_code AS parent,
+		           doc_updusr,
+		           use_yn,
+		           doc_code_no
+		    FROM documents
+		    
+		) doc
+		LEFT JOIN EMPLOYEE e ON doc.doc_updusr = e.empl_no
+		ORDER BY parent
+	
+	</select>
+	
+	<select id="selectOneDoc" resultType="documentsVO" parameterType="int">
+		select
+			doc_no
+			, doc_nm
+			, doc_cn
+            , doc_type_code
+			, cmmn_code_name1 as doc_type_nm
+			, d.use_yn
+			, doc_register
+			, doc_rgdde
+			, doc_updusr
+			, doc_updde
+			, doc_code_no
+		from documents d
+        left outer join comm_code c on (c.cmmn_code = d.doc_type_code)
+        WHERE d.doc_no = #{docNo}
+	
+	</select>
+	
+	<update id="updateDocForm" parameterType="documentsVO">
+		UPDATE documents
+		SET
+		    doc_type_code = #{docTypeCode},
+		    doc_nm = #{docNm},
+		    use_yn = #{useYn},
+		    doc_updusr = #{docUpdusr},
+		    doc_updde = sysdate
+		    
+		WHERE
+		    doc_no = #{docNo}
+	</update>
+	
+	<update id="updateDocuments" parameterType="documentsVO">
+		UPDATE documents
+		SET
+		    doc_type_code = #{docTypeCode},
+		    doc_nm = #{docNm},
+		    doc_cn = #{docCn},
+		    use_yn = #{useYn},
+		    doc_updusr = #{docUpdusr},
+		    doc_updde = sysdate
+		WHERE
+		    doc_no = #{docNo}
+	</update>
+	
+	<delete id="delSelectedDoc" parameterType="int">
+		
+		DELETE FROM documents
+		WHERE
+        doc_no = #{docNo}
+	</delete>
+	
+	<select id="getDocumentsUsedCountByDept" parameterType="documentsVO" resultType="documentsVO">
+		SELECT
+		    doc_nm
+		    , cmmn_code_name1 dept_nm
+		    , COUNT(a.doc_no) count
+		FROM
+		    documents   d
+		    INNER JOIN approval    a ON a.doc_no = d.doc_no
+		    INNER JOIN employee    e ON e.empl_no = a.empl_no
+		    INNER JOIN comm_code   c ON c.cmmn_code = e.dept_code
+		GROUP BY
+		    doc_nm
+		    , cmmn_code_name1
+	</select>
+	
+	<select id="getDocumentEmployeeChart" parameterType="documentsVO" resultType="documentsVO">
+		SELECT
+		    doc_nm,
+		    empl_nm,
+		    SUM(count) AS count
+		FROM
+		    (
+		        SELECT
+		            d.doc_nm,
+		            e.empl_nm,
+		            COUNT(a.doc_no) AS count
+		        FROM
+		            documents d
+		        INNER JOIN approval a ON a.doc_no = d.doc_no
+		        INNER JOIN employee e ON e.empl_no = a.empl_no
+		        INNER JOIN comm_code c ON c.cmmn_code = e.dept_code
+		        WHERE
+		            c.cmmn_code_name1 = #{deptNm}
+		        AND 
+		            doc_nm = #{docNm}
+		        GROUP BY
+		            d.doc_nm, e.empl_nm
+		    ) r
+		GROUP BY
+		    doc_nm, empl_nm
+		ORDER BY
+		    doc_nm, empl_nm
+	</select>
+	
+</mapper>

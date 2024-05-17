@@ -1,0 +1,622 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="kr.or.ddit.groupware.mapper.rental.IRentalMapper">
+
+	<sql id="commonInsert">
+		INSERT INTO EQUIPMENT_RENTAL (
+		ERNT_NO,
+		EMPL_NO,
+		EQPNM_CD,
+		ERNT_QY,
+		ERNT_RESN,
+		PRMISN_YN,
+		ERNT_BEGIN_DT,
+		ERNT_END_DT,
+		RGSDE,
+		RESOURCE_TYPE
+		) VALUES (
+		#{erntNo},
+		#{emplNo},
+		#{eqpnmCd},
+		#{erntQy},
+		#{erntResn},
+		'PENDING',
+		#{erntBeginDt, jdbcType=VARCHAR},
+		#{erntEndDt, jdbcType=VARCHAR},
+		SYSDATE,
+		#{resourceType}
+		)
+	</sql>
+
+
+	<insert id="rentVehicle" parameterType="rentalVO">
+		<selectKey keyProperty="erntNo" resultType="int"
+			order="BEFORE">
+			select seq_EQUIPMENT_RENTAL.nextval from dual
+		</selectKey>
+		<include refid="commonInsert" />
+	</insert>
+
+	<insert id="rentSupplies" parameterType="rentalVO">
+		<selectKey keyProperty="erntNo" resultType="int"
+			order="BEFORE">
+			select seq_EQUIPMENT_RENTAL.nextval from dual
+		</selectKey>
+		<include refid="commonInsert" />
+	</insert>
+
+	<select id="findRentalByResourceType" parameterType="map"
+		resultType="rentalVO">
+		SELECT
+		ERNT_NO,
+		EMPL_NO,
+		EQPNM_CD,
+		TO_CHAR(ERNT_BEGIN_DT, 'YYYY-MM-DD HH24:MI:SS') AS ERNT_BEGIN_DT,
+		TO_CHAR(ERNT_END_DT, 'YYYY-MM-DD HH24:MI:SS') AS ERNT_END_DT,
+		ERNT_RESN,
+		ERNT_QY,
+		RESOURCE_TYPE,
+		PRMISN_YN
+		FROM
+		EQUIPMENT_RENTAL
+		WHERE
+		RESOURCE_TYPE IN ( 'vehicle', 'supplies')
+		AND
+
+		(PRMISN_YN ='Y' OR PRMISN_YN='PENDING')
+
+	</select>
+
+	<select id="findOverlappingRentals" resultType="rentalVO">
+  <![CDATA[
+	    SELECT ERNT_NO, EMPL_NO, EQPNM_CD, RGSDE, ERNT_BEGIN_DT, ERNT_END_DT, RESOURCE_TYPE 
+	    FROM EQUIPMENT_RENTAL
+	    WHERE EQPNM_CD = #{eqpnmCd}
+	      AND (
+	          ERNT_BEGIN_DT < #{erntEndDt,jdbcType=VARCHAR} AND ERNT_END_DT > #{erntBeginDt,jdbcType=VARCHAR}
+	      )
+	    ]]>
+	</select>
+
+	<delete id="cancleRentalVehicle" parameterType="rentalVO">
+		DELETE FROM EQUIPMENT_RENTAL
+		WHERE ERNT_NO = #{erntNo}
+	</delete>
+
+	<delete id="cancleRentalSupplies" parameterType="rentalVO">
+		DELETE FROM EQUIPMENT_RENTAL
+		WHERE ERNT_NO = #{erntNo}
+	</delete>
+<!-- 대여 신청 내역 리스트  -->
+	<select id="selectRentalList" parameterType="pagingVO"
+		resultType="rentalVO">
+				<![CDATA[
+				 SELECT
+				    a.ERNT_NO, 
+				    a.EQPNM_CD,
+				    a.ERNT_RESN,  
+				    a.ERNT_BEGIN_DT,
+				    a.ERNT_END_DT,
+				    a.ERNT_QY,
+				    a.PRMISN_YN,
+				    b.ITEM_NM,
+				    b.ITEM_CODE,
+				    a.rnum,
+				    e.EMPL_NO,
+				    e.EMPL_NM
+				FROM (
+				    SELECT
+				        ER.ERNT_NO, 
+				        ER.EQPNM_CD,
+				        ER.ERNT_RESN,  
+				        ER.ERNT_BEGIN_DT,
+				        ER.ERNT_END_DT,
+				        ER.EMPL_NO, 
+				        ER.ERNT_QY,
+				        ER.PRMISN_YN,
+				        V.ITEM_NM,
+				        V.ITEM_CODE,
+				        ROW_NUMBER() OVER (ORDER BY ER.ERNT_NO DESC) AS rnum
+				    FROM EQUIPMENT_RENTAL ER
+				    INNER JOIN RENT_ITEM V ON ER.EQPNM_CD = V.ITEM_CODE
+				    WHERE
+				        ER.ERNT_NO LIKE '%' || #{searchWord} || '%' OR
+				        V.ITEM_NM LIKE '%' || #{searchWord} || '%' OR
+				        ER.ERNT_QY LIKE '%' || #{searchWord} || '%' OR
+				        TO_CHAR(ER.ERNT_BEGIN_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+				        TO_CHAR(ER.ERNT_END_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+				        ER.ERNT_RESN LIKE '%' || #{searchWord} || '%'
+				) a
+				INNER JOIN RENT_ITEM b ON a.EQPNM_CD = b.ITEM_CODE
+				INNER JOIN EMPLOYEE e ON a.EMPL_NO = e.EMPL_NO 
+				WHERE a.rnum BETWEEN #{startRow} AND #{endRow}
+				AND a.PRMISN_YN = 'PENDING'
+				AND e.EMPL_NO = #{emplNo}
+				ORDER BY a.ERNT_BEGIN_DT DESC
+    	]]>
+	</select>
+
+		<!-- 나의 대여신청내역 페이징 -->
+	<select id="selectRentalCount" resultType="int">
+		<![CDATA[
+		select count(ERNT_NO)
+		from EQUIPMENT_RENTAL ER
+		INNER JOIN RENT_ITEM R ON ER.EQPNM_CD = R.ITEM_CODE
+		where 1=1
+		and (ER.ERNT_NO LIKE '%' || #{searchWord} || '%' OR
+            R.ITEM_NM LIKE '%' || #{searchWord} || '%' OR
+            TO_CHAR(ER.ERNT_BEGIN_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+            TO_CHAR(ER.ERNT_END_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+            ER.ERNT_RESN LIKE '%' || #{searchWord} || '%')
+        and empl_no = #{emplNo}    
+        and PRMISN_YN = 'PENDING'    
+		]]>
+	</select>
+
+	<!--관리자 대여신청내역 페이징 -->
+	<select id="selectAdminRentalCount" resultType="int">
+		<![CDATA[
+		select count(ERNT_NO)
+		from EQUIPMENT_RENTAL ER
+		INNER JOIN RENT_ITEM R ON ER.EQPNM_CD = R.ITEM_CODE
+		where 1=1
+		and (ER.ERNT_NO LIKE '%' || #{searchWord} || '%' OR
+            R.ITEM_NM LIKE '%' || #{searchWord} || '%' OR
+            TO_CHAR(ER.ERNT_BEGIN_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+            TO_CHAR(ER.ERNT_END_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+            ER.ERNT_RESN LIKE '%' || #{searchWord} || '%')
+        and PRMISN_YN = 'PENDING'   
+		]]>
+	</select>
+
+<!--관리자 대여신청 내역 리스트  -->
+	<select id="selectAdminRentalList" parameterType="pagingVO"
+		resultType="rentalVO">
+			<![CDATA[
+			 SELECT
+			    a.ERNT_NO, 
+			    a.EQPNM_CD,
+			    a.ERNT_RESN,  
+			    a.ERNT_BEGIN_DT,
+			    a.ERNT_END_DT,
+			    a.ERNT_QY,
+			    a.PRMISN_YN,
+			    b.ITEM_NM,
+			    b.ITEM_CODE,
+			    a.rnum,
+			    e.EMPL_NO,
+			    e.EMPL_NM
+			FROM (
+			    SELECT
+			        ER.ERNT_NO, 
+			        ER.EQPNM_CD,
+			        ER.ERNT_RESN,  
+			        ER.ERNT_BEGIN_DT,
+			        ER.ERNT_END_DT,
+			        ER.EMPL_NO, 
+			        ER.ERNT_QY,
+			        ER.PRMISN_YN,
+			        V.ITEM_NM,
+			        V.ITEM_CODE,
+			        ROW_NUMBER() OVER (ORDER BY ER.ERNT_NO DESC) AS rnum
+			    FROM EQUIPMENT_RENTAL ER
+			    INNER JOIN RENT_ITEM V ON ER.EQPNM_CD = V.ITEM_CODE
+			    WHERE
+			        ER.ERNT_NO LIKE '%' || #{searchWord} || '%' OR
+			        V.ITEM_NM LIKE '%' || #{searchWord} || '%' OR
+			        ER.ERNT_QY LIKE '%' || #{searchWord} || '%' OR
+			        TO_CHAR(ER.ERNT_BEGIN_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+			        TO_CHAR(ER.ERNT_END_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+			        ER.ERNT_RESN LIKE '%' || #{searchWord} || '%'
+			) a
+			INNER JOIN RENT_ITEM b ON a.EQPNM_CD = b.ITEM_CODE
+			INNER JOIN EMPLOYEE e ON a.EMPL_NO = e.EMPL_NO 
+			WHERE a.rnum BETWEEN #{startRow} AND #{endRow}
+			AND a.PRMISN_YN = 'PENDING'
+			ORDER BY a.ERNT_BEGIN_DT DESC
+   	]]>
+	</select>
+
+
+
+	<!--대여신청 알림받을 admin List -->
+<!-- 	<select id="findEmployeesByAuthority" -->
+<!-- 		parameterType="empAuthorityVO" resultType="int"> -->
+
+<!-- 		SELECT EMPL_NO FROM EMP_AUTHORITY WHERE AUTHOR_NM = #{authorNm} AND USE_YN = -->
+<!-- 		'Y' -->
+
+<!-- 	</select> -->
+	
+	<!--대여승인시 -->
+	<update id="SelectApproveRental" parameterType="int">
+		UPDATE EQUIPMENT_RENTAL
+		SET PRMISN_YN = 'Y'
+		WHERE ERNT_NO = #{erntNo}
+	</update>
+
+	<!--대여반려시 -->
+	<update id="SelectRejectRental" parameterType="int">
+		UPDATE EQUIPMENT_RENTAL
+		SET PRMISN_YN = 'N'
+		WHERE ERNT_NO = #{erntNo}
+	</update>
+	
+	<!-- 나의 반납대기 리스트 -->
+	<select id="selectReturnPendingList" parameterType="pagingVO"
+		resultType="rentalVO">
+			<![CDATA[
+			 SELECT
+				    a.ERNT_NO, 
+				    a.EQPNM_CD,
+				    a.ERNT_RESN,  
+				    a.ERNT_BEGIN_DT,
+				    a.ERNT_END_DT,
+				    a.ERNT_QY,
+				    a.PRMISN_YN,
+				    b.ITEM_NM,
+				    b.ITEM_CODE,
+				    a.rnum,
+				    e.EMPL_NO,
+				    e.EMPL_NM
+				FROM (
+				    SELECT
+				        ER.ERNT_NO, 
+				        ER.EQPNM_CD,
+				        ER.ERNT_RESN,  
+				        ER.ERNT_BEGIN_DT,
+				        ER.ERNT_END_DT,
+				        ER.EMPL_NO, 
+				        ER.ERNT_QY,
+				        ER.PRMISN_YN,
+				        V.ITEM_NM,
+				        V.ITEM_CODE,
+				        ROW_NUMBER() OVER (ORDER BY ER.ERNT_NO DESC) AS rnum
+				    FROM EQUIPMENT_RENTAL ER
+				    INNER JOIN RENT_ITEM V ON ER.EQPNM_CD = V.ITEM_CODE
+				    WHERE
+				        ER.ERNT_NO LIKE '%' || #{searchWord} || '%' OR
+				        V.ITEM_NM LIKE '%' || #{searchWord} || '%' OR
+				        ER.ERNT_QY LIKE '%' || #{searchWord} || '%' OR
+				        TO_CHAR(ER.ERNT_BEGIN_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+				        TO_CHAR(ER.ERNT_END_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+				        ER.ERNT_RESN LIKE '%' || #{searchWord} || '%'
+				) a
+				INNER JOIN RENT_ITEM b ON a.EQPNM_CD = b.ITEM_CODE
+				INNER JOIN EMPLOYEE e ON a.EMPL_NO = e.EMPL_NO 
+				WHERE a.rnum BETWEEN #{startRow} AND #{endRow}
+				AND e.EMPL_NO = #{emplNo}
+				AND a.PRMISN_YN = 'Y'
+				ORDER BY a.ERNT_BEGIN_DT DESC
+   	]]>
+	</select>
+
+	<!--나의 반납 대기 페이징 -->
+	<select id="selectReturnPendingCount" resultType="int">
+		<![CDATA[
+		select count(ERNT_NO)
+		from EQUIPMENT_RENTAL ER
+		INNER JOIN RENT_ITEM R ON ER.EQPNM_CD = R.ITEM_CODE
+		where 1=1
+		and (ER.ERNT_NO LIKE '%' || #{searchWord} || '%' OR
+            R.ITEM_NM LIKE '%' || #{searchWord} || '%' OR
+            TO_CHAR(ER.ERNT_BEGIN_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+            TO_CHAR(ER.ERNT_END_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+            ER.ERNT_RESN LIKE '%' || #{searchWord} || '%')
+        and empl_no = #{emplNo}  
+        and PRMISN_YN = 'Y'   
+		]]>
+	</select>
+	
+	<!-- 관리자 승인/반려 완료내역 페이징 -->
+	<select id="selectApprovedAdminRentalCount" resultType="int">
+		<![CDATA[
+		select count(ERNT_NO)
+		from EQUIPMENT_RENTAL ER
+		INNER JOIN RENT_ITEM R ON ER.EQPNM_CD = R.ITEM_CODE
+		where 1=1
+		and (ER.ERNT_NO LIKE '%' || #{searchWord} || '%' OR
+            R.ITEM_NM LIKE '%' || #{searchWord} || '%' OR
+            TO_CHAR(ER.ERNT_BEGIN_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+            TO_CHAR(ER.ERNT_END_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+            ER.ERNT_RESN LIKE '%' || #{searchWord} || '%')
+        and (PRMISN_YN = 'Y' or PRMISN_YN ='N')    
+		]]>
+	</select>
+
+<!-- 관리자 승인/반려 완료 내역 리스트 -->
+	<select id="selectApprovedAdminRentalList" parameterType="pagingVO"
+		resultType="rentalVO">
+			<![CDATA[
+			 SELECT
+			    a.ERNT_NO, 
+			    a.EQPNM_CD,
+			    a.ERNT_RESN,  
+			    a.ERNT_BEGIN_DT,
+			    a.ERNT_END_DT,
+			    a.ERNT_QY,
+			    a.PRMISN_YN,
+			    b.ITEM_NM,
+			    b.ITEM_CODE,
+			    a.rnum,
+			    e.EMPL_NO,
+			    e.EMPL_NM
+			FROM (
+			    SELECT
+			        ER.ERNT_NO, 
+			        ER.EQPNM_CD,
+			        ER.ERNT_RESN,  
+			        ER.ERNT_BEGIN_DT,
+			        ER.ERNT_END_DT,
+			        ER.EMPL_NO, 
+			        ER.ERNT_QY,
+			        ER.PRMISN_YN,
+			        V.ITEM_NM,
+			        V.ITEM_CODE,
+			        ROW_NUMBER() OVER (ORDER BY ER.ERNT_NO DESC) AS rnum
+			    FROM EQUIPMENT_RENTAL ER
+			    INNER JOIN RENT_ITEM V ON ER.EQPNM_CD = V.ITEM_CODE
+			    WHERE
+			        ER.ERNT_NO LIKE '%' || #{searchWord} || '%' OR
+			        V.ITEM_NM LIKE '%' || #{searchWord} || '%' OR
+			        ER.ERNT_QY LIKE '%' || #{searchWord} || '%' OR
+			        TO_CHAR(ER.ERNT_BEGIN_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+			        TO_CHAR(ER.ERNT_END_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+			        ER.ERNT_RESN LIKE '%' || #{searchWord} || '%'
+			) a
+			INNER JOIN RENT_ITEM b ON a.EQPNM_CD = b.ITEM_CODE
+			INNER JOIN EMPLOYEE e ON a.EMPL_NO = e.EMPL_NO 
+			WHERE a.rnum BETWEEN #{startRow} AND #{endRow}
+			AND (a.PRMISN_YN = 'Y' or a.PRMISN_YN = 'N')  
+			ORDER BY a.ERNT_BEGIN_DT DESC
+   	]]>
+	</select>
+	<!-- 반납하기  -->
+	<update id="returnRental" parameterType="rentalVO">
+		UPDATE EQUIPMENT_RENTAL
+		SET ERNT_RTURN_DT = SYSDATE,
+		PRMISN_YN = 'RETURNED'
+		WHERE ERNT_NO = #{erntNo}
+
+	</update>
+	
+
+	<!--관리자 반납조회 페이징 -->
+	<select id="selectReturnedAdminRentalCount" resultType="int">
+		<![CDATA[
+		select count(ERNT_NO)
+		from EQUIPMENT_RENTAL ER
+		INNER JOIN RENT_ITEM R ON ER.EQPNM_CD = R.ITEM_CODE
+		where 1=1
+		and (ER.ERNT_NO LIKE '%' || #{searchWord} || '%' OR
+            R.ITEM_NM LIKE '%' || #{searchWord} || '%' OR
+            TO_CHAR(ER.ERNT_BEGIN_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+            TO_CHAR(ER.ERNT_END_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+            ER.ERNT_RESN LIKE '%' || #{searchWord} || '%')
+         and PRMISN_YN = 'RETURNED'
+        and ERNT_RTURN_DT is not null    
+		]]>
+	</select>
+
+<!--관리자 회의실예약 조회  -->
+	<select id="selectAdminReservList" parameterType="pagingVO"
+		resultType="rentalVO">
+			<![CDATA[
+		 SELECT
+			    a.RESVE_NO, 
+			    a.MTNG_ROOM_NO,
+			    a.RESVE_CN,  
+			    a.RESVE_BEGIN_DT,
+			    a.RESVE_END_DT,
+			    b.MTG_ROOM_NM,
+			    b.MTG_ROOM_NO,
+			    a.rnum,
+			    e.EMPL_NO,
+			    e.EMPL_NM
+			FROM (
+			    SELECT
+			        R.RESVE_NO, 
+			        R.MTNG_ROOM_NO,
+			        R.RESVE_CN,  
+			        R.RESVE_BEGIN_DT,
+			        R.RESVE_END_DT,
+			        R.EMPL_NO, 
+			        M.MTG_ROOM_NM,
+			        M.MTG_ROOM_NO,
+			        ROW_NUMBER() OVER (ORDER BY  R.RESVE_NO) AS rnum
+			    FROM RESERVATION R
+			    INNER JOIN MEETING_ROOM M ON R.MTNG_ROOM_NO = M.MTG_ROOM_NO
+			    WHERE
+			       R.RESVE_NO LIKE '%' || #{searchWord} || '%' OR
+		            M.MTG_ROOM_NM LIKE '%' || #{searchWord} || '%' OR
+		            TO_CHAR(R.RESVE_BEGIN_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+		            TO_CHAR(R.RESVE_END_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+		            R.RESVE_CN LIKE '%' || #{searchWord} || '%'
+			) a 
+			INNER JOIN MEETING_ROOM b ON a.MTNG_ROOM_NO = b.MTG_ROOM_NO
+			INNER JOIN EMPLOYEE e ON a.EMPL_NO = e.EMPL_NO 
+			WHERE a.rnum BETWEEN #{startRow} AND #{endRow}
+			ORDER BY RESVE_BEGIN_DT DESC
+   	]]>
+	</select>
+	
+		<!--관리자 회의실예약 페이징 -->
+	<select id="selectAdminReservCount" resultType="int">
+		<![CDATA[
+		select count(RESVE_NO)
+		from RESERVATION R
+		INNER JOIN MEETING_ROOM M ON R.MTNG_ROOM_NO = M.MTG_ROOM_NO
+		where 1=1
+		and (R.RESVE_NO LIKE '%' || #{searchWord} || '%' OR
+            M.MTG_ROOM_NM LIKE '%' || #{searchWord} || '%' OR
+            TO_CHAR(R.RESVE_BEGIN_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+            TO_CHAR(R.RESVE_END_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+            R.RESVE_CN LIKE '%' || #{searchWord} || '%')
+		]]>
+	</select>
+
+<!--관리자 반납조회 리스트  -->
+	<select id="selectReturnedAdminRentalList" parameterType="pagingVO"
+		resultType="rentalVO">
+			<![CDATA[
+		 SELECT
+			    a.ERNT_NO, 
+			    a.EQPNM_CD,
+			    a.ERNT_RESN,  
+			    a.ERNT_BEGIN_DT,
+			    a.ERNT_END_DT,
+			    a.ERNT_QY,
+			     TO_CHAR(a.ERNT_RTURN_DT, 'YYYY-MM-DD HH24:MI:SS') AS ERNT_RTURN_DT,
+			    
+			    a.PRMISN_YN,
+			    b.ITEM_NM,
+			    b.ITEM_CODE,
+			    a.rnum,
+			    e.EMPL_NO,
+			    e.EMPL_NM
+			FROM (
+			    SELECT
+			        ER.ERNT_NO, 
+			        ER.EQPNM_CD,
+			        ER.ERNT_RESN,  
+			        ER.ERNT_BEGIN_DT,
+			        ER.ERNT_END_DT,
+			        ER.EMPL_NO, 
+			        ER.ERNT_QY,
+			        ER.ERNT_RTURN_DT, 
+			        ER.PRMISN_YN,
+			        V.ITEM_NM,
+			        V.ITEM_CODE,
+			        ROW_NUMBER() OVER (ORDER BY ER.ERNT_NO DESC) AS rnum
+			    FROM EQUIPMENT_RENTAL ER
+			    INNER JOIN RENT_ITEM V ON ER.EQPNM_CD = V.ITEM_CODE
+			    WHERE
+			        ER.ERNT_NO LIKE '%' || #{searchWord} || '%' OR
+			        V.ITEM_NM LIKE '%' || #{searchWord} || '%' OR
+			        ER.ERNT_QY LIKE '%' ||#{searchWord} || '%' OR
+			        TO_CHAR(ER.ERNT_BEGIN_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' ||#{searchWord} || '%' OR
+			        TO_CHAR(ER.ERNT_END_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+			        ER.ERNT_RESN LIKE '%' ||#{searchWord} || '%'
+			) a 
+			INNER JOIN RENT_ITEM b ON a.EQPNM_CD = b.ITEM_CODE
+			INNER JOIN EMPLOYEE e ON a.EMPL_NO = e.EMPL_NO 
+			WHERE a.rnum BETWEEN #{startRow} AND #{endRow}
+			AND a.PRMISN_YN = 'RETURNED'
+			and a.ERNT_RTURN_DT is not null
+			ORDER BY a.ERNT_BEGIN_DT DESC
+   	]]>
+	</select>
+	
+	
+
+		<!-- 나의 반납대기 리스트 -->
+	<select id="returnSucceedList" parameterType="pagingVO"
+		resultType="rentalVO">
+			<![CDATA[
+			 SELECT
+				    a.ERNT_NO, 
+				    a.EQPNM_CD,
+				    a.ERNT_RESN,  
+				    a.ERNT_BEGIN_DT,
+				    a.ERNT_END_DT,
+				    a.ERNT_QY,
+				     TO_CHAR(a.ERNT_RTURN_DT, 'YYYY-MM-DD HH24:MI:SS') AS ERNT_RTURN_DT,
+				    a.PRMISN_YN,
+				    b.ITEM_NM,
+				    b.ITEM_CODE,
+				    a.rnum,
+				    e.EMPL_NO,
+				    e.EMPL_NM
+				FROM (
+				    SELECT
+				        ER.ERNT_NO, 
+				        ER.EQPNM_CD,
+				        ER.ERNT_RESN,  
+				        ER.ERNT_BEGIN_DT,
+				        ER.ERNT_END_DT,
+				        ER.EMPL_NO, 
+				        ER.ERNT_QY,
+				         ER.ERNT_RTURN_DT, 
+				        ER.PRMISN_YN,
+				        V.ITEM_NM,
+				        V.ITEM_CODE,
+				        ROW_NUMBER() OVER (ORDER BY ER.ERNT_NO DESC) AS rnum
+				    FROM EQUIPMENT_RENTAL ER
+				    INNER JOIN RENT_ITEM V ON ER.EQPNM_CD = V.ITEM_CODE
+				    WHERE
+				        ER.ERNT_NO LIKE '%' || #{searchWord} || '%' OR
+				        V.ITEM_NM LIKE '%' || #{searchWord} || '%' OR
+				        ER.ERNT_QY LIKE '%' || #{searchWord} || '%' OR
+				        TO_CHAR(ER.ERNT_BEGIN_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+				        TO_CHAR(ER.ERNT_END_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+				        ER.ERNT_RESN LIKE '%' || #{searchWord} || '%'
+				) a
+				INNER JOIN RENT_ITEM b ON a.EQPNM_CD = b.ITEM_CODE
+				INNER JOIN EMPLOYEE e ON a.EMPL_NO = e.EMPL_NO 
+				WHERE a.rnum BETWEEN #{startRow} AND #{endRow}
+				AND e.EMPL_NO = #{emplNo}
+				AND a.PRMISN_YN = 'RETURNED'
+				ORDER BY a.ERNT_BEGIN_DT DESC
+   	]]>
+	</select>
+
+	<!--나의 반납 대기 페이징 -->
+	<select id="ReturnSucceedCount" resultType="int">
+		<![CDATA[
+		select count(ERNT_NO)
+		from EQUIPMENT_RENTAL ER
+		INNER JOIN RENT_ITEM R ON ER.EQPNM_CD = R.ITEM_CODE
+		where 1=1
+		and (ER.ERNT_NO LIKE '%' || #{searchWord} || '%' OR
+            R.ITEM_NM LIKE '%' || #{searchWord} || '%' OR
+            TO_CHAR(ER.ERNT_BEGIN_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+            TO_CHAR(ER.ERNT_END_DT, 'YYYY-MM-DD HH24:MI:SS') LIKE '%' || #{searchWord} || '%' OR
+            ER.ERNT_RESN LIKE '%' || #{searchWord} || '%')
+        and empl_no = #{emplNo}  
+        and PRMISN_YN = 'RETURNED'   
+		]]>
+	</select>
+	
+	<!-- 통계1 -->
+	<select id="getMostRentalStat" parameterType="rentalVO" resultType="rentalVO">
+		SELECT
+		    item_nm,
+		    COUNT(item_nm) count
+		FROM
+		    equipment_rental er
+		    LEFT OUTER JOIN rent_item        r ON er.eqpnm_cd = item_code
+		GROUP BY
+		    item_nm
+	</select>
+	
+	<!-- 통계2 -->
+	<select id="getDayRentalStat" parameterType="rentalVO" resultType="rentalVO">
+		WITH all_hours AS (
+		    SELECT TO_CHAR(LEVEL - 1, 'FM00') AS hour_of_day
+		    FROM DUAL
+		    <![CDATA[
+			    CONNECT BY LEVEL <= 25
+		    ]]>
+		)
+		SELECT
+		    ah.hour_of_day,
+		    COALESCE(rental_count, 0) AS count
+		FROM
+		    all_hours ah
+		    LEFT JOIN (
+		        SELECT
+		            TO_CHAR(ernt_begin_dt, 'HH24') AS hour_of_day,
+		            COUNT(*) AS rental_count
+		        FROM
+		            equipment_rental
+		        GROUP BY
+		            TO_CHAR(ernt_begin_dt, 'HH24')
+		    ) rental_data
+		    ON ah.hour_of_day = rental_data.hour_of_day
+		ORDER BY
+		    ah.hour_of_day
+	</select>
+	
+
+</mapper>

@@ -1,0 +1,138 @@
+@charset "UTF-8";
+/* @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap"); */
+/* @import "../fonts/tabler-icons/tabler-icons.css"; */
+/* @import "../fonts/crypto-icons/cryptocoins.css"; */
+/* @import "../fonts/flag-icon-css/flag-icon.min.css"; */
+
+.logo {
+	width: 150px;
+	align: center;
+}
+
+.brand-logo {
+	justify-content: center;
+	margin-top: 15px;
+	margin-right: 10px;
+}
+
+.fixed-organ-tree {
+	display: block;
+}
+
+.modal-organixationtree {
+	max-width: var(- -bs-modal-width);
+	margin-left: 260px;
+	margin-top: calc(100vh - 500px);
+}
+
+.organization-tree-search {
+	border-bottom: solid 1px lightgray;
+	width: 100%;
+	padding: 8px;
+}
+
+.organization-tree-search-box {
+	border: none;
+}
+
+.organ-tree .has-arrow {
+	display: flex;
+    align-items: center;
+}
+
+.organ-tree .has-arrow.active::after {
+	top: 18px;
+	margin-top: 1px;
+	border-color: var(- -bs-white);
+	transform: rotate(-135deg) translate(0, -50%);
+}
+
+.organ-tree .has-arrow::after {
+	content: "";
+	width: 7px;
+	height: 7px;
+	border-width: 1px 0 0 1px;
+	border-style: solid;
+	border-color: var(- -bs-dark-text-emphasis);
+	margin-left: 10px;
+	transform: rotate(135deg) translate(0, -50%);
+	transform-origin: top;
+	top: 22px;
+	right: 15px;
+	transition: all 0.3s ease-out;
+}
+
+.organ-tree ul {
+  padding-left: 15px;
+}
+
+.organ-tree-empl{
+  display: flex;
+  font-size: 14px;
+  white-space: nowrap;
+  align-items: center;
+  line-height: 25px;
+  position: relative;
+  margin: 0px 0px 2px;
+  padding: 10px;
+  border-radius: 16px;
+  gap: 10px;
+  text-decoration: none;
+  font-weight: 400;
+  background-color: #F2F2E4;
+  box-shadow: var(--card-box-shadow);
+  color: var(--bs-gray-900);
+  border: 1px solid #ddd;
+}
+
+.yen-inner-imag{
+  width: 100%;
+}
+.tree-ad-icon{
+  margin-left: 8px;
+  display: flex;
+  gap: 10px;
+}
+#organization-tree-search-box{
+  border: none;
+  &:focus {
+    outline: none;
+  }
+}
+
+.cover-fit{
+  object-fit: cover;
+}
+
+.round-50p{
+  width: 50%;
+  aspect-ratio: 1;
+}
+
+.tl-profile-img {
+  aspect-ratio: 1;
+  object-fit: cover;	
+  border-radius: 50% !important;
+}
+
+.animate__fadeOut {
+  animation-duration: 0.5s;
+}
+
+.yen-h-100{
+  height: 100%;
+}
+.mx-xxl-50 {
+  margin-right: 50px !important;
+  margin-left: 50px !important;
+}
+
+.yen-fill-y{
+  flex-grow: 1;
+}
+
+/* 24.05.03 추가 - 이영주  */
+.tree-ad-icon{
+  cursor: pointer;
+	
+}

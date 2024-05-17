@@ -1,0 +1,138 @@
+.w-15 {
+    width: 15% !important;
+}
+
+.border-gray {
+	border-bottom: 1px solid #ddd;
+}
+
+.bg-gray {
+	background: #f4f4f4;
+}
+
+.icon-active {
+	color: #00a1b9;
+	font-weight: 600;
+}
+
+.accordion-button::after {
+    transform: rotate(270deg);
+    /* 각도 조정 */
+}
+
+.accordion-button:not(.collapsed)::after {
+    transform: rotate(360deg);
+    /* 각도 조정 */
+}
+
+.font-weight-bold {
+    font-weight: 600;
+}
+
+.accordion-button:focus {
+    box-shadow: none;
+}
+
+.content-area>p {
+    margin: 0;
+    padding-bottom: 0.25rem;
+    padding-top: 0.25rem;
+}
+
+.approval-action:hover {
+    transition: 0.7s;
+    background: #00a1b9;
+    border-radius: 0 0 7px 7px;
+}
+
+.approval-action:hover>span {
+    color: white;
+}
+
+.approval-item {
+    border: 1px solid #ddd;
+    margin: 1rem 1.5rem 0 0;
+}
+
+.approval-item:hover {
+    transition: 0.5s;
+    transform: translateY(-7px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07),
+        0 2px 4px rgba(0, 0, 0, 0.07),
+        0 4px 8px rgba(0, 0, 0, 0.07),
+        0 8px 16px rgba(0, 0, 0, 0.07),
+        0 16px 32px rgba(0, 0, 0, 0.07),
+        0 32px 64px rgba(0, 0, 0, 0.07);
+}
+
+.approval-item:hover:not {
+    transition: 0.5s;
+}
+
+.approval-ongoing {
+    background: #a6c76c;
+}
+
+.approval-finish {
+    background: #A3A3A3;
+}
+
+.approval-temp {
+	background: #F6B3B3;
+}
+
+.approval-return {
+	background: #ff616b;
+}
+
+.approval-gray {
+    background: #eee;
+}
+
+.approval-title {
+    margin-bottom: 10px;
+}
+
+#approval-btn:hover {
+    transition: 0.5s;
+    transform: translateY(-2px);
+    border: 1px solid #dce9fc;
+    background-color: #fff;
+    box-shadow: 0 3px 3px rgba(0,0,0,0.2);
+}
+
+.approval-emergency {
+    background: none;
+    border: 1px solid #ff9f9d;
+    padding: 3px;
+    color: #fb4c49;
+}
+
+.modal-config {
+    width: 700px !important;
+}
+
+[data-exit] {
+    top: 8px;
+    right: 8px;
+}
+
+.search-hi-lite {
+    background-color: yellow;
+}
+
+.doc-footer {
+    padding: 8px 0px 0px 24px;
+}
+
+.custom-popover {
+    --bs-popover-max-width: 204px;
+    --bs-popover-border-color: #a3a3a3;
+    --bs-popover-header-bg: #a3a3a3;
+    /* --bs-popover-border-color: #712cf9;
+    --bs-popover-header-bg: #712cf9; */
+    --bs-popover-header-color: #fff;
+    --bs-popover-body-padding-x: 1rem;
+    --bs-popover-body-padding-y: .5rem;
+}
+

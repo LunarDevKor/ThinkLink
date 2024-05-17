@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.groupware.mapper.project.IProjectMapper">
+	
+	<select id="selectProjectListByEmplNo" parameterType="int" resultType="projectVO">
+		SELECT
+		    a.prjct_no,
+		    a.prjct_nm,
+		    a.empl_no,
+		    a.prjct_begin_date,
+		    a.prjct_end_date,
+		    a.prjct_code,
+		    a.prjct_cn,
+		    a.prjct_color_code
+		FROM
+		    project a, project_participant b
+		where
+		    a.prjct_no = b.prjct_no
+		    and b.empl_no = #{emplNo}
+	</select>
+	
+	<select id="selectAvailableProjectListByEmplNo" parameterType="int" resultType="projectVO">
+		SELECT
+		    a.prjct_no,
+		    a.prjct_nm,
+		    a.empl_no,
+		    a.prjct_begin_date,
+		    a.prjct_end_date,
+		    a.prjct_code,
+		    a.prjct_cn,
+		    b.PRJCT_PRTCPNT_COLOR_CODE prjct_color_code
+		FROM
+		    project a, project_participant b
+		where
+		    a.prjct_no = b.prjct_no
+		    and (a.prjct_code = 'P102' OR a.prjct_code='P101')
+		    and b.empl_no = #{emplNo}
+	</select>
+	
+	<select id="selectProjectParticipant" parameterType="int" resultType="int">
+		SELECT
+		    empl_no
+		FROM
+		    project_participant
+		where
+		    prjct_no = #{projectNo}
+	</select>
+	
+	<select id="selectprjctSchdulListByemplNo" parameterType="int" resultType="prjctSchdulVO">
+		select 
+		    s.schdul_no, 
+		    p.prjct_no, 
+		    pp.prjct_prtcpnt_color_code prjct_color, 
+		    p.prjct_nm, 
+		    s.schdul_nm, 
+		    s.schdul_bgnde, 
+		    s.schdul_endde,
+		    TO_CHAR(s.schdul_bgnde, 'YYYY-MM-DD') schdul_bgn_date_str,
+		    TO_CHAR(s.schdul_bgnde, 'HH24:MI') schdul_bgn_time_str,
+		    TO_CHAR(s.schdul_endde, 'YYYY-MM-DD') schdul_end_date_str,
+		    TO_CHAR(s.schdul_endde, 'HH24:MI') schdul_end_time_str,
+		    s.schdul_place,
+    		s.allday_yn
+		from 
+		    project_participant pp, project p, sch_group sg, sch_group_include sgi, schedule s
+		where
+		    1 = 1
+		    and pp.prjct_no = p.prjct_no
+		    and sg.schdul_type_code = 'C104'
+		    and sg.psitn_code = p.prjct_no
+		    and (p.prjct_code = 'P101' or p.prjct_code = 'P102')
+		    and sgi.schdul_group_no = sg.schdul_group_no
+		    and sgi.schdul_no = s.schdul_no
+		    and s.schdul_endde >= sysdate
+		    and pp.empl_no = 20240004
+	</select>
+	
+	<select id="selectPrjctPrtcpntListByPrjcrNo" parameterType="int" resultType="employeeVO">
+		SELECT
+		    pp.empl_no,
+		    e.empl_nm,
+		    e.empl_profl_photo,
+		    cop.clsf_nm,
+		    cc.cmmn_code_name1 dept_nm
+		FROM
+		    project_participant pp, employee e, comm_code cc, class_of_position cop
+		where
+		    pp.empl_no = e.empl_no
+		    and e.clsf_code = cop.clsf_code
+		    and e.dept_code = cc.cmmn_code
+		    and prjct_no = #{prjctNo}
+	</select>
+	
+	<select id="selectPrjctReprtListByPrjctNo" parameterType="Map" resultType="projectReportVO">
+		SELECT
+		    pr.prjct_reprt_no,
+		    pr.prjct_no,
+		    pr.empl_no,
+		    e.empl_nm,
+		    pr.prjct_reprt_nm,
+		    pr.prjct_reprt_cn,
+		    pr.prjct_reprt_rgdde,
+		    pr.prjct_reprt_target_date,
+		    pr.atch_file_grp_no
+		FROM
+		    project_report pr, employee e
+		where 
+		    pr.empl_no = e.empl_no
+		    and pr.prjct_reprt_wd = #{wd}
+		    and prjct_no = #{prjctNo}
+	</select>
+	
+	<insert id="insertProject" parameterType="Map">
+		<selectKey keyProperty="prjctNo" resultType="int" order="BEFORE">
+			select SEQ_PROJECT.nextval from dual
+		</selectKey>
+		INSERT INTO project (
+		    prjct_no,
+		    prjct_nm,
+		    empl_no,
+		    prjct_begin_date,
+		    prjct_end_date,
+		    prjct_cn,
+		    prjct_color_code
+		) VALUES (
+		    #{prjctNo},
+		    #{prjctNm},
+		    #{emplNo},
+		    #{prjcBeginDate},
+		    #{prjctEndDate},
+		    #{prjctCn},
+		    #{prjctColorCode}
+		)
+	</insert>
+	
+	<insert id="insertProjectParticipant" parameterType="Map">
+		INSERT INTO project_participant (
+		    prjct_prtcpnt_no,
+		    empl_no,
+		    prjct_no,
+		    prjct_prtcpnt_color_code
+		) VALUES (
+		    SEQ_PRJCT_PRTCPNT.nextval,
+		    #{emplNo},
+		    #{prjctNo},
+		    #{prjctColorCode}
+		)
+	</insert>
+	
+	<insert id="insertProjectReport" parameterType="projectReportVO">
+		INSERT INTO project_report (
+		    prjct_reprt_no,
+		    prjct_no,
+		    empl_no,
+		    prjct_reprt_nm,
+		    prjct_reprt_cn,
+		    prjct_reprt_rgdde,
+		    prjct_reprt_target_date,
+		    <if test='atchFileGrpNo != null and atchFileGrpNo != 0'>
+		    atch_file_grp_no,
+		    </if>
+		    prjct_reprt_wd
+		) VALUES (
+		    SEQ_PRJCT_DIARY.nextval,
+		    #{prjctNo},
+		    #{emplNo},
+		    #{prjctReprtNm},
+		    #{prjctReprtCn},
+		    sysdate,
+		    TO_DATE(#{prjctReprtTargetDateString},'yyyy-mm-dd'),
+		    <if test='atchFileGrpNo != null and atchFileGrpNo != 0'>
+		    	#{atchFileGrpNo},
+		    </if>
+		    'd'
+		)
+	</insert>
+	
+	<select id="selectProjectByPrjctNo" parameterType="Map" resultType="projectVO">
+		SELECT
+		    p.prjct_no,
+		    p.prjct_nm,
+		    p.empl_no,
+		    p.prjct_begin_date,
+		    p.prjct_end_date,
+		    TO_CHAR(p.prjct_begin_date,'yyyy.mm.dd') bgn_date_string,
+		    TO_CHAR(p.prjct_end_date,'yyyy.mm.dd') end_date_string,
+		    p.prjct_code,
+		    p.prjct_cn,
+		    pp.prjct_prtcpnt_color_code prjct_color_code
+		FROM
+		    project p, project_participant pp
+		where 
+		    p.prjct_no = pp.prjct_no
+		    and p.prjct_no = #{prjctNo}
+		    and pp.empl_no = #{emplNo}
+	</select>
+	
+	<select id="selectPrjctReptByReptNo" parameterType="int" resultType="projectReportVO">
+		SELECT
+		    pr.prjct_reprt_no,
+		    pr.prjct_no,
+		    pr.empl_no,
+		    e.empl_nm,
+		    pr.prjct_reprt_nm,
+		    pr.prjct_reprt_cn,
+		    pr.prjct_reprt_rgdde,
+		    pr.prjct_reprt_target_date,
+		    TO_CHAR(prjct_reprt_target_date,'yyyy.mm.dd.') prjct_reprt_target_date_string,
+		    pr.atch_file_grp_no
+		FROM
+		    project_report pr, employee e
+		where 
+		    pr.empl_no = e.empl_no
+		    and prjct_reprt_no = #{prjctReprtNo}
+	</select>
+
+	<!-- 통계 시작 -->
+	
+	<!-- 프로젝트 조회 -->
+	<select id="selectProjectListForChart" parameterType="projectVO" resultType="projectVO">
+		SELECT
+		    prjct_no,
+		    prjct_nm,
+		    NVL(prjct_cn, '-') prjct_cn,
+		    TO_CHAR(prjct_begin_date,'yyyy-MM-dd') bgn_date_string,
+		    TO_CHAR(prjct_end_date,'yyyy-MM-dd') end_date_string,
+		    total_count.count count,
+		    cmmn_code_name1 prjct_color_code
+		FROM
+		         project
+		    CROSS JOIN (
+		        SELECT
+		            COUNT(*) count
+		        FROM
+		            project
+		    ) total_count
+		INNER JOIN comm_code on cmmn_code_name2 = prjct_color_code
+		ORDER BY
+		    prjct_no DESC
+	</select>
+	
+	<select id="selectProjectTaskDeadlineByEmployee" parameterType="projectVO" resultType="projectVO">
+		SELECT
+		    round((COUNT(*) - SUM(
+		        CASE
+		        	<![CDATA[
+			            WHEN task_end_dt <= current_date THEN
+		        	]]>
+		                1
+		            ELSE
+		                0
+		        END
+		    )) / COUNT(*) * 100, 1) AS compliance_rate
+		FROM
+		    task
+		WHERE
+		        empl_no = #{emplNo}
+		    AND prjct_no = #{prjctNo}
+	</select>
+	<!-- 통계 끝 -->
+	
+</mapper>

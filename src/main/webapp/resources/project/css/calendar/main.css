@@ -1,0 +1,65 @@
+@charset "UTF-8";
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap");
+/* @import "../fonts/tabler-icons/tabler-icons.css"; */
+/* @import "../fonts/crypto-icons/cryptocoins.css"; */
+/* @import "../fonts/flag-icon-css/flag-icon.min.css"; */
+
+
+#schedule-color-circle {
+}
+
+.col-yen-10{
+  width: 10%;
+}
+
+.col-yen-30{
+  width: 30%;
+}
+
+.col-yen-35{
+  width: 35%;
+}
+
+.col-yen-50{
+  width: 50%;
+}
+.schedul-page-box {
+  max-width: 1700px;
+  margin-left: auto;
+}
+
+#schedule-detail-info {
+	margin: 50px;
+}
+
+.schedule-detail-title>* {
+	margin: 10px;
+}
+
+.schedule-detail-content {
+	margin-left: 10px;
+}
+
+.schedule-detail-info-elem>* {
+	margin-left: 10px;
+	margin-top: 10px;
+}
+
+.schedule-detail-description {
+	margin-top: 10px;
+}
+.cal-nav {
+  margin-right: 30px;
+  margin-top: 50px;
+}
+
+.schedule-detail-icon{
+/*   display:none; */
+}
+
+#schedule-detail-attendee {
+  display: flex;
+  row-gap: 8px;
+  column-gap: 4px;
+  flex-wrap: wrap;
+}

@@ -1,0 +1,688 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.groupware.mapper.employee.IEmployeeMapper">
+
+	<resultMap type="employeeVO" id="employeeMap">
+		<id property="emplNo" column="EMPL_NO"/>
+		<result property="emplNo" column="EMPL_NO"/>
+		<result property="clsfCode" column="CLSF_CODE"/>
+		<result property="deptCode" column="DEPT_CODE"/>
+		<result property="deptNm" column="DEPT_NM"/>
+		<result property="emplNm" column="EMPL_NM"/>
+		<result property="emplId" column="EMPL_ID"/>
+		<result property="emplPassword" column="EMPL_PASSWORD"/>
+		<result property="emplZip" column="EMPL_ZIP"/>
+		<result property="emplAdres" column="EMPL_ADRES"/>
+		<result property="emplAdres2" column="EMPL_ADRES2"/>
+		<result property="emplEmail" column="EMPL_EMAIL"/>
+		<result property="emplTelno" column="EMPL_TELNO"/>
+		<result property="emplIhidnum" column="EMPL_IHIDNUM"/>
+		<result property="emplProflPhoto" column="EMPL_PROFL_PHOTO"/>
+		<result property="emplSign" column="EMPL_SIGN"/>
+		<result property="enabled" column="ENABLED"/>
+		<result property="emplEncpn" column="EMPL_ENCPN"/>
+		<result property="rgsde" column="RGSDE"/>
+		<result property="register" column="REGISTER"/>
+		<result property="updde" column="UPDDE"/>
+		<result property="updusr" column="UPDUSR"/>
+		<collection property="classOfPositionVO" resultMap="classOfPositionMap"/>
+		<collection property="AuthList" resultMap="empAuthorityMap" />
+		<collection property="employeeDetailVO" resultMap="employeeDetailMap" />
+	</resultMap>
+	
+	<resultMap type="classOfPositionVO" id="classOfPositionMap">
+		<id property="clsfCode" column="CLSF_CODE"/>
+		<result property="clsfCode" column="CLSF_CODE"/>
+		<result property="clsfNm" column="CLSF_NM"/>
+		<result property="clsfLevel" column="CLSF_LEVEL"/>
+		<result property="useYn" column="USE_YN"/>
+		<result property="rgsde" column="RGSDE"/>
+		<result property="register" column="REGISTER"/>
+		<result property="updde" column="UPDDE"/>
+		<result property="updusr" column="UPDUSR"/>
+	</resultMap>
+	
+	<resultMap type="empAuthorityVO" id="empAuthorityMap">
+		<result property="authorNo" column="author_no" />
+		<result property="emplNo" column="empl_no" />
+		<result property="authorNm" column="author_nm" />
+		<result property="useYn" column="use_yn" />
+	</resultMap>
+	
+	<resultMap type="employeeDetailVO" id="employeeDetailMap">
+		<result property="emplDetailNo" column="empl_detail_no" />
+		<result property="emplNo" column="empl_no" />
+		<result property="bankNm" column="bank_nm" />
+		<result property="bankAcnutno" column="bank_acnutno" />
+		<result property="accountDpstr" column="account_dpstr" />
+		<result property="empAnnual" column="emp_annual" />
+		<result property="rgsde" column="rgsde" />
+		<result property="register" column="register" />
+		<result property="updde" column="updde" />
+		<result property="updusr" column="updusr" />
+	</resultMap>
+	
+	<!-- 사원 한명 정보 불러오기 -->
+	<select id="selectEmployee" parameterType="int" resultMap="employeeMap">
+		SELECT
+   			a.EMPL_NO,
+   			a.clsf_code,
+   			b.CLSF_NM,
+   			c.CMMN_CODE as DEPT_CODE,
+   			c.CMMN_CODE_NAME1 as DEPT_NM,
+   			EMPL_NM, EMPL_ID,
+   			EMPL_PASSWORD,
+   			EMPL_ZIP,
+   			EMPL_ADRES,
+   			EMPL_ADRES2,
+   			EMPL_EMAIL,
+   			EMPL_TELNO,
+   			EMPL_IHIDNUM,
+   			EMPL_PROFL_PHOTO,
+   			a.ENABLED,
+   			EMPL_ENCPN,
+   			a.RGSDE,
+   			a.REGISTER,
+   			a.UPDDE,
+   			a.UPDUSR
+<!--    			d.bank_nm, -->
+<!--    			d.bank_acnutno, -->
+<!--    			d.account_dpstr, -->
+<!--    			d.emp_annual -->
+		FROM 
+		    EMPLOYEE a
+		INNER JOIN 
+		    CLASS_OF_POSITION b ON a.CLSF_CODE = b.CLSF_CODE
+		INNER JOIN 
+		    COMM_CODE c ON a.DEPT_CODE = c.CMMN_CODE
+<!-- 		LEFT OUTER JOIN  -->
+<!-- 		    employee_detail d ON a.EMPL_NO = d.EMPL_NO -->
+		WHERE
+		    a.EMPL_NO = #{emplNo}
+	</select>
+	
+	<!-- 비밀번호 체크 -->
+	<select id="pwCheck" parameterType="employeeVO" resultType="int">
+		SELECT
+			COUNT(EMPL_NO)
+		FROM
+			EMPLOYEE
+		WHERE
+			EMPL_NO = #{emplNo} and EMPL_PASSWORD = #{emplPassword}
+	</select>
+	
+	<!-- 내 정보 수정 -->
+	<update id="updateEmployee" parameterType="employeeVO">
+		UPDATE
+			EMPLOYEE
+		SET 
+		    EMPL_ZIP = #{emplZip},
+		    EMPL_ADRES = #{emplAdres},
+		    EMPL_ADRES2 = #{emplAdres2},
+		    EMPL_EMAIL = #{emplEmail},
+		    <if test="emplProflPhoto != null and emplProflPhoto != ''">
+		    	EMPL_PROFL_PHOTO = #{emplProflPhoto},
+			</if>
+		    EMPL_TELNO = #{emplTelno},
+		    UPDDE = sysdate,
+		    UPDUSR = #{emplNo}
+		WHERE
+			empl_no = #{emplNo}
+	</update>
+	
+	<!-- DEPT_CODE = DEPT_CODE -->
+	<select id="selectAllEmpl" resultType="employeeVO">
+		SELECT
+		    a.empl_no,
+		    a.clsf_code,
+		    b.clsf_nm,
+		    a.dept_code,
+		    a.empl_nm,
+		    a.empl_id,
+		    a.empl_email,
+		    a.empl_telno,
+		    a.EMPL_PROFL_PHOTO
+		FROM
+		    employee a, class_of_position b
+		where
+		    enabled= '1' and a.clsf_code = b.clsf_code
+		order by a.clsf_code desc
+	</select>
+	
+    <!-- DEPT_CODE = 팀명(CMMN_CODE_NAME1) -->
+	<select id="selectAllEmpl2" resultType="employeeVO">
+		SELECT
+		    a.empl_no,
+		    a.clsf_code,
+		    b.clsf_nm,
+		    a.dept_code,
+		    c.CMMN_CODE_NAME1 as DEPT_NM,
+		    a.empl_nm,
+		    a.empl_id,
+		    a.empl_email,
+		    a.empl_telno,
+		    a.EMPL_PROFL_PHOTO
+		FROM
+		    employee a, class_of_position b, COMM_CODE c
+		where
+		    enabled= '1' and a.clsf_code = b.clsf_code and a.DEPT_CODE = c.CMMN_CODE
+		ORDER BY
+		    a.DEPT_CODE ASC,
+		    a.clsf_code DESC
+	</select>
+	
+	<sql id="emplSearch">
+		<if test="searchType != null and searchType == 'all'">
+			and (
+		        e.empl_nm LIKE '%'||#{searchWord}||'%'
+		        OR c.CMMN_CODE_NAME1 LIKE '%'||#{searchWord}||'%'
+		    	)
+		</if>
+	</sql>
+	
+	<!-- 이용상태에 따른 사원 리스트 -->
+	<select id="selectEmplList" parameterType="pagingVO" resultMap="employeeMap">
+		select
+			b.*
+		from(
+			select	
+				a.*, row_number() over (order by empl_no desc) rnum
+			from(
+				select
+					e.empl_no, e.clsf_code, d.clsf_nm as clsf_nm, e.dept_code, c.cmmn_code_name1 as dept_nm, empl_nm, empl_id, empl_password,
+					empl_zip, empl_adres, empl_adres2, empl_email, empl_telno,
+					empl_ihidnum, empl_profl_photo, enabled,
+					empl_encpn, e.rgsde, e.register, e.updde, e.updusr
+				from employee e
+				left join comm_code c on (e.dept_code = c.cmmn_code)
+				left join class_of_position d on (e.clsf_code = d.clsf_code)
+   				WHERE e.enabled = #{enabled}
+		 		<include refid="emplSearch"/>
+<!-- 				order by e.empl_no desc -->
+			) a
+		) b
+		<![CDATA[
+		where b.rnum >= #{startRow} and b.rnum <= #{endRow}
+		]]>
+
+	</select>
+	
+	<!-- 이용상태에 따른 사원의 명수  -->
+	<select id="emplListCount" parameterType="pagingVO" resultType="int">
+		SELECT COUNT(*) AS record_count
+		FROM employee e
+		LEFT JOIN comm_code c ON e.dept_code = c.cmmn_code
+		LEFT JOIN class_of_position d ON e.clsf_code = d.clsf_code
+		WHERE e.enabled = #{enabled}
+		<include refid="emplSearch"/>
+	</select>
+	
+	<!-- 해당 사원의 권한 리스트 -->
+	<select id="selectAuthList" parameterType="int" resultMap="empAuthorityMap">
+	SELECT
+	    author_no
+	  , empl_no
+	  , author_nm
+	  , use_yn
+	  , rgsde
+	  , register
+	  , updde
+	  , updusr
+	FROM
+	    emp_authority
+	WHERE
+		empl_no = #{emplNo}
+	</select>
+	
+	<select id="selectDeptEmpl" parameterType="string" resultType="employeeVO">
+		SELECT
+		    a.empl_no,
+		    a.clsf_code,
+		    b.clsf_nm,
+		    a.dept_code,
+		    a.empl_nm,
+		    a.empl_id,
+		    a.empl_email,
+		    a.empl_telno,
+		    a.EMPL_PROFL_PHOTO
+		FROM
+		    employee a, class_of_position b
+		where
+		    enabled= '1' and a.clsf_code = b.clsf_code
+		    and a.dept_code = #{deptCode}
+		order by a.clsf_code desc
+	</select>
+	
+	<select id="selectEstbsByEmplNo" parameterType="employeeEstbsVO" resultType="employeeEstbsVO">
+		select 
+			estbs_no
+			, empl_no
+			, estbs_type_code
+			, estbs_cn
+		from employee_estbs
+		where empl_no = #{emplNo}
+		and estbs_type_code = #{estbsTypeCode}	
+	</select>
+	
+	<!-- 뉴스 키워드 인서트 -->
+	<insert id="insertNewsKeyword" parameterType="employeeEstbsVO" useGeneratedKeys="true">
+		<selectKey resultType="int" keyProperty="estbsNo" order="BEFORE">
+        	SELECT SEQ_EMPLOYEE_ESTBS.nextval FROM dual
+    	</selectKey>
+			INSERT INTO employee_estbs (
+			    estbs_no
+			    , empl_no
+			    , estbs_type_code
+			    , estbs_cn
+			    , estbs_rgdde
+			    , estbs_register
+			) VALUES (
+			    SEQ_EMPLOYEE_ESTBS.nextval
+			  , #{emplNo}
+			  , #{estbsTypeCode}
+			  , #{estbsCn}
+			  , sysdate
+			  , #{emplNo}   --로그인한 상태의 사람의 empl_no를 가져온다
+			)
+	</insert>
+	<!-- 키워드 업데이트 -->
+	<update id="updateNewsKeyword" parameterType="employeeEstbsVO">
+		UPDATE employee_estbs
+		SET
+		    estbs_cn = #{estbsCn}
+		    ,estbs_updde = sysdate
+		    ,estbs_updusr = #{emplNo}
+		WHERE
+		    estbs_no = #{estbsNo}
+
+	</update>
+	
+	<!-- 직급 리스트 -->
+	<select id="selectClsfList" resultType="classOfPositionVO">
+		SELECT
+		    clsf_code
+		  , clsf_nm
+		  , clsf_level
+		  , use_yn
+		  , rgsde
+		  , register
+		  , updde
+		  , updusr
+		FROM
+		    class_of_position
+		WHERE
+			use_yn = 'Y'
+	</select>
+	
+	<!-- 부서 리스트 -->
+	<select id="selectDeptList" resultType="employeeVO">
+		SELECT
+		    cmmn_code as deptCode,
+		    cmmn_code_name1 as deptNm
+		FROM
+		    comm_code
+		WHERE
+		    cmmn_code LIKE 'D%'
+		AND
+			use_yn = 'Y'
+	</select>
+	
+	<!-- 사원테이블 인서트 -->
+	<insert id="insertEmployee" parameterType="employeeVO">
+    <selectKey keyProperty="emplNo" resultType="int" order="BEFORE">
+        SELECT TO_CHAR(sysdate, 'YYYYMM') || LPAD(seq_employee.NEXTVAL, 2, '0') AS emplNo FROM dual
+    </selectKey>
+    INSERT INTO employee (
+                        empl_no
+                        , clsf_code
+                        , dept_code
+                        , empl_nm
+                        , empl_id
+                        , empl_password
+                        , empl_zip
+                        , empl_adres
+                        , empl_adres2
+                        , empl_email
+                        , empl_telno
+                        , empl_ihidnum
+                        , empl_profl_photo
+                        , empl_sign
+                        , enabled
+                        , empl_encpn
+                        , rgsde
+                        , register
+                    ) VALUES (
+                        #{emplNo}
+                        , #{clsfCode}
+                        , #{deptCode}
+                        , #{emplNm}
+                        , #{emplId}
+                        , #{emplPassword}
+                        , #{emplZip}
+                        , #{emplAdres}
+                        , #{emplAdres2}
+                        , #{emplEmail}
+                        , #{emplTelno}
+                        , #{emplIhidnum}
+                        , #{emplProflPhoto}
+                        , #{emplSign}
+                        , '1'
+                        , #{emplEncpn}
+                        , sysdate
+                        , #{register}
+                    )
+	</insert>
+
+	<!-- 사원디테일 인서트 -->
+	<insert id="insertEmplDetail"  parameterType="employeeDetailVO">
+	INSERT INTO employee_detail (
+							    empl_detail_no
+							    , empl_no
+							    , bank_nm
+							    , bank_acnutno
+							    , account_dpstr
+							    , rgsde
+							    , register
+								) VALUES (
+								   seq_employee_detail.nextval
+								   , #{emplNo}
+								   , #{bankNm}
+								   , #{bankAcnutno}
+								   , #{accountDpstr}
+								   , #{rgsde}
+								   , #{register}
+								)
+	</insert>
+	
+	<!-- 사원 권한 인서트 -->
+	<insert id="insertEmpAuth"  parameterType="empAuthorityVO">
+	INSERT INTO emp_authority (
+								    author_no
+								    , empl_no
+								    , author_nm
+								    , use_yn
+								    , rgsde
+								    , register
+								) VALUES (
+								  	SEQ_EMP_AUTH.nextval
+								    , #{emplNo}
+								    , #{authorNm}
+								    , 'Y'
+								    , sysdate
+								    , #{register}
+								)
+	</insert>
+	
+	<!-- 아이디 중복체크 -->
+	<select id="idCheck" parameterType="String" resultType="int">
+		select count(*)
+		from employee
+		where empl_id = #{emplId}
+	</select>
+	
+	<!-- 관리자가 사원 수정 -->
+	<update id="updateEmplInfo" parameterType="employeeVO">
+		UPDATE employee
+		SET
+	    	clsf_code = #{clsfCode}
+		    ,dept_code = #{deptCode}
+<!-- 		    ,empl_nm = #{emplNm} -->
+		    ,empl_password = #{emplPassword}
+		    ,empl_zip = #{emplZip}
+		    ,empl_adres = #{emplAdres}
+		    ,empl_adres2 = #{emplAdres2}
+		    ,empl_email = #{emplEmail}
+		    ,empl_telno = #{emplTelno}
+		    <if test="emplProflPhoto != null and emplProflPhoto != ''">
+		    	,EMPL_PROFL_PHOTO = #{emplProflPhoto}
+			</if>
+			<if test="emplSign != null and emplSign != ''">
+		    	,empl_sign = #{emplSign}
+		    </if>
+		    ,empl_encpn = #{emplEncpn}
+		    ,updde = sysdate
+		    ,updusr = #{updusr}
+		WHERE
+		    empl_no = #{emplNo}
+	</update>
+	
+	<!-- 관리자가 사원디테일 수정 -->
+	<update id="updateEmplDetail" parameterType="employeeDetailVO">
+		UPDATE employee_detail
+		SET
+		    bank_nm = #{bankNm}
+		    ,bank_acnutno = #{bankAcnutno}
+		    ,account_dpstr = #{accountDpstr}
+		    ,updde = sysdate
+		    ,updusr = ${updusr}
+		WHERE
+		    empl_no = #{emplNo}
+	</update>
+	
+	<!-- 이용상태 업데이트 -->
+	<update id="enabledUpdate" parameterType="employeeVO">
+		UPDATE employee
+		SET
+		    enabled = #{enabled}
+		    ,updde = sysdate
+		    ,updusr = ${updusr}
+		WHERE
+		    empl_no = #{emplNo}
+	</update>
+	
+	<!-- 권한 삭제 -->
+	<delete id="deleteAuth" parameterType="int">
+		DELETE FROM emp_authority
+		WHERE
+		    empl_no = #{emplNo}
+		    AND author_nm = 'ROLE_ADMIN'
+	</delete>
+	
+	<!-- 사원 한명 정보 불러오기 -->
+	<select id="selectEmployee2" parameterType="int" resultMap="employeeMap">
+		SELECT
+   			a.EMPL_NO,
+   			a.clsf_code,
+   			b.CLSF_NM,
+   			c.CMMN_CODE as DEPT_CODE,
+   			c.CMMN_CODE_NAME1 as DEPT_NM,
+   			EMPL_NM, EMPL_ID,
+   			EMPL_PASSWORD,
+   			EMPL_ZIP,
+   			EMPL_ADRES,
+   			EMPL_ADRES2,
+   			EMPL_EMAIL,
+   			EMPL_TELNO,
+   			EMPL_IHIDNUM,
+   			EMPL_PROFL_PHOTO,
+   			EMPL_SIGN,
+   			a.ENABLED,
+   			EMPL_ENCPN,
+   			a.RGSDE,
+   			a.REGISTER,
+   			a.UPDDE,
+   			a.UPDUSR,
+   			d.bank_nm,
+   			d.bank_acnutno,
+   			d.account_dpstr,
+   			d.emp_annual
+		FROM 
+		    EMPLOYEE a
+		INNER JOIN 
+		    CLASS_OF_POSITION b ON a.CLSF_CODE = b.CLSF_CODE
+		INNER JOIN 
+		    COMM_CODE c ON a.DEPT_CODE = c.CMMN_CODE
+		LEFT OUTER JOIN 
+		    employee_detail d ON a.EMPL_NO = d.EMPL_NO
+		WHERE
+		    a.EMPL_NO = #{emplNo}
+	</select>
+	
+	<!-- 근태통계에서 사원리스트 불러오기 -->
+	<select id="selectEmplListStatics" resultMap="employeeMap">
+		SELECT
+			a.EMPL_NO,
+   			b.CLSF_NM,
+   			c.CMMN_CODE as DEPT_CODE,
+   			c.CMMN_CODE_NAME1 as DEPT_NM,
+   			EMPL_NM,
+   			EMPL_IHIDNUM,
+   			a.ENABLED,
+   			EMPL_ENCPN
+		FROM 
+		    EMPLOYEE a
+		INNER JOIN 
+		    CLASS_OF_POSITION b ON a.CLSF_CODE = b.CLSF_CODE
+		INNER JOIN 
+		    COMM_CODE c ON a.DEPT_CODE = c.CMMN_CODE
+		LEFT OUTER JOIN 
+		    employee_detail d ON a.EMPL_NO = d.EMPL_NO
+		where a.enabled= '1'
+	</select>
+	
+	
+	
+	<select id="selectAllEmplExceptMe" parameterType="int" resultType="employeeVO">
+		SELECT
+		    a.empl_no,
+		    a.clsf_code,
+		    b.clsf_nm,
+		    a.dept_code,
+		    c.CMMN_CODE_NAME1 as DEPT_NM,
+		    a.empl_nm,
+		    a.empl_id,
+		    a.empl_email,
+		    a.empl_telno,
+		    a.EMPL_PROFL_PHOTO
+		FROM
+		    employee a, class_of_position b, COMM_CODE c
+		where
+		    enabled= '1' and a.clsf_code = b.clsf_code 
+		    and a.DEPT_CODE = c.CMMN_CODE
+		    and a.empl_no != #{emplNo} 
+		ORDER BY
+		    a.clsf_code DESC
+	</select>
+	
+	<!-- 팀리스트 -->
+	<select id="selectTeamList" parameterType="pagingVO" resultMap="employeeMap">
+	 		select
+			b.*
+		from(
+			select	
+				a.*, row_number() over (order by empl_no desc) rnum
+			from(
+				select
+					e.empl_no, e.clsf_code, d.clsf_nm as clsf_nm, e.dept_code, c.cmmn_code_name1 as dept_nm, empl_nm, empl_id, empl_password,
+					empl_zip, empl_adres, empl_adres2, empl_email, empl_telno,
+					empl_ihidnum, empl_profl_photo, enabled,
+					empl_encpn, e.rgsde, e.register, e.updde, e.updusr
+				from employee e
+				left join comm_code c on (e.dept_code = c.cmmn_code)
+				left join class_of_position d on (e.clsf_code = d.clsf_code)
+   				WHERE e.enabled = '1'
+  				and e.dept_code = #{word}
+		 		<if test="searchType != null and searchType == 'all'">
+					and (
+				        e.empl_nm LIKE '%'||#{searchWord}||'%'
+				    	)
+				</if>
+<!-- 				order by e.empl_no desc -->
+			) a
+		) b
+		<![CDATA[
+		where b.rnum >= #{startRow} and b.rnum <= #{endRow}
+		]]>
+	</select>
+	
+	<!-- 팀리스트 개수 -->
+	<select id="teamListCount" parameterType="pagingVO" resultType="int">
+		SELECT COUNT(*) AS record_count
+		FROM employee e
+		LEFT JOIN comm_code c ON e.dept_code = c.cmmn_code
+		LEFT JOIN class_of_position d ON e.clsf_code = d.clsf_code
+		WHERE e.enabled = '1'
+  		and e.dept_code = #{word}
+		<if test="searchType != null and searchType == 'all'">
+			and (
+		        e.empl_nm LIKE '%'||#{searchWord}||'%'
+		    	)
+		</if>
+	</select>
+	
+	<!-- 관리자 메인페이지 사원 수 -->
+	<select id="getEmployeeCount" resultType="int">
+		select count(*)
+		from employee
+		union all
+		select count(*)
+		from employee
+		where enabled = 1
+	</select>
+	
+	<!-- 관리자 페이지 사원 부서별 통계 -->
+	<select id="getEmployeeDeptChart" resultType="map">
+		SELECT
+		    cmmn_code_name1 as dept_nm
+		    , COUNT(empl_no) AS count
+		FROM
+		    employee
+		    INNER JOIN comm_code ON cmmn_code = dept_code
+		GROUP BY
+		    cmmn_code_name1
+	</select>
+	
+	<!-- 관리자 페이지 사원 나이별 통계 그룹 -->
+	<select id="getEmployeeAgeGroupChart" resultType="map">
+		SELECT
+		    age_group AS age_group,
+		    gender AS gender_group,
+		    COUNT(*) AS count
+		FROM
+		    (
+		        SELECT
+		            CASE
+		                WHEN age BETWEEN 20 AND 29 THEN '20~29'
+		                WHEN age BETWEEN 30 AND 39 THEN '30~39'
+		                WHEN age BETWEEN 40 AND 49 THEN '40~49'
+		                WHEN age BETWEEN 50 AND 59 THEN '50~59'
+                        WHEN age BETWEEN 60 AND 69 THEN '60~69'
+		            END AS age_group,
+		            CASE
+		                WHEN substr(empl_ihidnum, 8, 1) IN ('1', '3') THEN '남성'
+		                WHEN substr(empl_ihidnum, 8, 1) IN ('2', '4') THEN '여성'
+		            END AS gender
+		        FROM
+		            (
+		                SELECT
+		                    empl_no,
+		                    empl_ihidnum,
+		                    CASE
+		                        WHEN substr(empl_ihidnum, 8, 1) IN ('1', '2') THEN
+		                            1900 + CAST(substr(empl_ihidnum, 1, 2) AS INT)
+		                        WHEN substr(empl_ihidnum, 8, 1) IN ('3', '4') THEN
+		                            2000 + CAST(substr(empl_ihidnum, 1, 2) AS INT)
+		                    END AS birth_year,
+		                    2024 -
+		                        CASE
+		                            WHEN substr(empl_ihidnum, 8, 1) IN ('1', '2') THEN
+		                                1900 + CAST(substr(empl_ihidnum, 1, 2) AS INT)
+		                            WHEN substr(empl_ihidnum, 8, 1) IN ('3', '4') THEN
+		                                2000 + CAST(substr(empl_ihidnum, 1, 2) AS INT)
+		                        END AS age
+		                FROM
+		                    employee
+		            )
+		        WHERE
+		            age IS NOT NULL
+		    )
+		GROUP BY
+		    age_group,
+		    gender
+		ORDER BY
+		    age_group,
+		    gender
+	</select>
+</mapper>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.groupware.mapper.attach.IAttachFileMapper">
+
+	<resultMap type="attachFileGroupVO" id="attachFileGroupMap">
+		<result property="atchFileGroupNo" column="atch_file_group_no" />
+		<result property="delYn" column="del_yn" />
+		<result property="register" column="register" />
+		<result property="rgsde" column="rgsde" />
+		<result property="updusr" column="updusr" />
+		<result property="updde" column="updde" />
+		<collection property="attachFileList" resultMap="attachFileMap" />
+	</resultMap>
+	
+	<resultMap type="attachFileVO" id="attachFileMap">
+		<result property="atchFileNo" column="atch_file_no" />
+		<result property="atchFileGroupNo" column="atch_file_group_no" />
+		<result property="atchFileNm" column="atch_file_nm" />
+		<result property="atchFileOrnlFileNm" column="atch_file_ornl_file_nm" />
+		<result property="atchFileSize" column="atch_file_size" />
+		<result property="atchFileFancysize" column="atch_file_fancysize" />
+		<result property="atchFileExtsn" column="atch_file_extsn" />
+		<result property="atchFileDate" column="atch_file_date" />
+		<result property="atchFilePath" column="atch_file_path" />
+	</resultMap>
+
+	<insert id="insertAttachFileGroup" useGeneratedKeys="true">
+		<selectKey keyProperty="atchFileGroupNo" resultType="int" order="BEFORE">
+			select SEQ_ATTACH_FILE_GROUP.nextval from dual
+		</selectKey>
+		insert into attach_file_group(
+			ATCH_FILE_GROUP_NO, DEL_YN
+		)values(
+			#{atchFileGroupNo}, 'N'
+		)
+	</insert>
+	
+	<insert id="insertSavedFile" parameterType="attachFileVO">
+		insert into attach_file(
+			atch_file_no, atch_file_group_no, atch_file_nm,
+			atch_file_ornl_file_nm, atch_file_size, atch_file_fancysize,
+			atch_file_extsn, atch_file_date, atch_file_path
+		)values(
+			seq_attach_file.nextval, #{atchFileGroupNo}, #{atchFileNm},
+			#{atchFileOrnlFileNm}, #{atchFileSize}, #{atchFileFancysize},
+			#{atchFileExtsn}, sysdate, #{atchFilePath}
+		)
+	</insert>
+	
+	<select id="getAttachFileGroup" parameterType="int" resultMap="attachFileGroupMap">
+		select 
+		    a.atch_file_group_no
+            , del_yn
+            , "REGISTER" as register
+            , rgsde
+            , updusr
+            , updde
+            , atch_file_no
+            , atch_file_nm
+            , atch_file_ornl_file_nm
+            , atch_file_size
+            , atch_file_fancysize
+            , atch_file_extsn
+            , atch_file_date
+            , atch_file_path
+		from attach_file_group a right join attach_file b on (a.atch_file_group_no = b.atch_file_group_no)
+		where a.atch_file_group_no = #{atchFileGroupNo}
+	</select>
+	
+	<delete id="attachFileDelete" parameterType="int">
+		delete from attach_file
+		where atch_file_no = #{attachFileNo}
+	</delete>
+
+</mapper>

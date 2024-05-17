@@ -1,0 +1,37 @@
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx" xmlns:beans="http://www.springframework.org/schema/beans" xmlns:context="http://www.springframework.org/schema/context" xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+	<context:component-scan base-package="kr.or.ddit.groupware">
+	<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+	</context:component-scan>
+	
+	<!--  HIKARI CP (데이터 베이스 커넥션풀 라이브러리) 설정  -->
+	<bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
+		<property name="driverClassName" value="net.sf.log4jdbc.sql.jdbcapi.DriverSpy"/>
+		<property name="jdbcUrl" value="jdbc:log4jdbc:oracle:thin:@112.220.114.130:1521:xe"/>
+		<property name="username" value="team3_202310F"/>
+		<property name="password" value="java"/>
+		<property name="minimumIdle" value="3"/>
+		<property name="maximumPoolSize" value="5"/>
+	</bean>
+	<!--  HIKARI CP DATASOURCE 라이브러리에 CONFIG등록  -->
+	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
+		<constructor-arg ref="hikariConfig"/>
+	</bean>
+	<!--  DATASOUCE 등록 / Mapper 및 CONFIG 경로 설정  -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"/>
+		<property name="mapperLocations" value="classpath:/mapper/**/*.xml"/>
+		<property name="configLocation" value="classpath:/config/mybatis-config.xml"/>
+	</bean>
+	<!--  Mapper 베이스 패키지 설정  -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="kr.or.ddit.groupware.mapper"/>
+	</bean>
+	<!--  트랜잭션 매니저 Bean 정의 DATASOURCE 등록  -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+	<tx:annotation-driven/>
+	<bean id="path" class="java.lang.String">
+		<constructor-arg value="C:/upload/"/>
+	</bean>
+</beans>
