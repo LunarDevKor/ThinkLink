@@ -1,0 +1,118 @@
+@charset "UTF-8";
+.btn-toggle {
+	padding: .25rem .5rem;
+	font-weight: 600;
+	color: var(- -bs-emphasis-color);
+	background-color: transparent;
+}
+
+.btn-toggle:hover, .btn-toggle:focus {
+	color: rgba(var(- -bs-emphasis-color-rgb), .85);
+	background-color: var(- -bs-tertiary-bg);
+}
+
+.btn-toggle::before {
+	width: 1.25em;
+	line-height: 0;
+	content:
+		url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='rgba(255,255,255,.5)' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 14l6-6-6-6'/%3e%3c/svg%3e");
+	transition: transform .35s ease;
+	transform-origin: .5em 50%;
+}
+
+.btn-toggle[aria-expanded="true"] {
+	color: rgba(var(- -bs-emphasis-color-rgb), .85);
+}
+
+.btn-toggle[aria-expanded="true"]::before {
+	transform: rotate(90deg);
+}
+
+.btn-toggle-nav a {
+	padding: .1875rem .5rem;
+	margin-top: .125rem;
+	margin-left: 1.25rem;
+}
+
+.btn-toggle-nav a:hover, .btn-toggle-nav a:focus {
+	color: #5A6A85 !important;
+	background-color: none;
+}
+
+.btn-toggle-nav a:active {
+	background-color: none;
+}
+
+[data-menu] {
+	color: white;
+	font-weight: 600;
+	font-size: 18px;
+}
+
+[data-list] li a {
+	color: white !important;
+	font-size: 14px;
+}
+
+[data-list] li a:active {
+	color: white !important;
+	font-size: 14px;
+}
+
+.left-sidebar {
+	background: #212529 !important;
+	border-right: none;
+}
+
+.line {
+	width: 90%;
+	border-bottom: 1px solid #444;
+}
+
+.menu-header {
+	color: #777;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+::-webkit-scrollbar {
+	width: 8px;
+}
+::-webkit-scrollbar-track {
+	box-shadow: inset 0 0 5px grey;
+	border-radius: 3px;
+	background: #ddd;
+}
+::-webkit-scrollbar-thumb {
+	background: #808080;
+	border-radius: 10px;
+}
+::-webkit-scrollbar-corner {
+	background: transparent;
+}
+
+#aside-area {
+  overflow-y: hidden;
+}
+
+#aside-area:hover{
+	overflow: overlay;
+}
+.logo-margin {
+	margin: 20px !important;
+    margin-bottom: 10px !important;
+    margin-left: 40px !important;
+}
+@media (max-width: 1280px) {
+	.left-sidebar {
+		left: 0;
+	  	height: 100%;
+	}
+	#toggle-sidebar {
+		margin-left: 40px !important;
+	}
+	.menu_column {
+	    margin-right: 85px !important;
+	}
+}
+

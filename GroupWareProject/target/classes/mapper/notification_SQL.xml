@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.groupware.mapper.notification.INotificationMapper">
+	<sql id="typeSQL">
+		<if test="type == 'approval'">
+			and ntcn_type_code IN ('N101', 'N102', 'N103', 'N104', 'N105')
+		</if>
+		<if test="type == 'board'">
+			and ntcn_type_code IN ('N106', 'N107')
+		</if>
+		<if test="type == 'mail'">
+			and ntcn_type_code IN ('N108', 'N109')
+		</if>
+		<if test="type == 'schedule'">
+			and ntcn_type_code IN ('N111', 'N112', 'N113', 'N114')
+		</if>
+		<if test="type == 'rental'">
+			and ntcn_type_code IN ('N115', 'N116')
+		</if>
+		<if test="type == 'project'">
+			and ntcn_type_code IN ('N117', 'N118', 'N119')
+		</if>
+	</sql>
+
+	<insert id="insertNotification" parameterType="notificationVO" useGeneratedKeys="true">
+		<selectKey keyProperty="ntcnNo" resultType="int" order="BEFORE">
+			select seq_notification.nextval from dual
+		</selectKey>
+		insert into notification(
+		    ntcn_no
+		    , ntcn_recp
+		    , ntcn_type_code
+		    , ntcn_content
+		    , ntcn_url
+		    , ntcn_dt
+		)values(
+		    #{ntcnNo}
+		    , #{ntcnRecp}
+		    , #{ntcnTypeCode}
+		    , #{ntcnContent}
+		    , #{ntcnUrl}
+		    , #{localDt}
+		)
+	</insert>
+	
+	<update id="updateNotiSendYn" parameterType="int" >
+		update notification
+		set
+			ntcn_send_yn = 'Y'
+		where ntcn_no = #{ntcnNo}
+	</update>
+
+	<select id="selectNotiList" parameterType="int" resultType="notificationVO">
+		select 
+			ntcn_no
+			, ntcn_recp
+			, ntcn_type_code
+			, ntcn_content
+			, ntcn_url
+			, ntcn_read_dt
+		    , ntcn_dt local_dt
+		    , TO_CHAR(ntcn_dt, 'yyyy-MM-dd HH24:MI') ntcn_dt
+		    , ntcn_send_yn
+		from notification
+		where ntcn_recp = #{emplNo}
+		and TO_DATE(TO_CHAR(CURRENT_TIMESTAMP, 'yyyy-MM-dd HH24:MI'), 'yyyy-MM-dd HH24:MI') 
+		>= TO_DATE(TO_CHAR(ntcn_dt, 'yyyy-MM-dd HH24:MI'), 'yyyy-MM-dd HH24:MI')
+		and ntcn_send_yn = 'N'
+		order by ntcn_dt desc
+	</select>
+	
+	<select id="selectNotiPageList" parameterType="notificationVO" resultType="notificationVO">
+		select 
+			ntcn_no
+			, ntcn_recp
+			, ntcn_type_code
+			, ntcn_content
+			, ntcn_url
+			, ntcn_read_dt
+		    , ntcn_dt local_dt
+		    , TO_CHAR(ntcn_dt, 'yyyy-MM-dd HH24:MI') ntcn_dt
+		    , ntcn_send_yn
+		from notification
+		where ntcn_recp = #{ntcnRecp}
+		and TO_DATE(TO_CHAR(CURRENT_TIMESTAMP, 'yyyy-MM-dd HH24:MI'), 'yyyy-MM-dd HH24:MI') 
+		>= TO_DATE(TO_CHAR(ntcn_dt, 'yyyy-MM-dd HH24:MI'), 'yyyy-MM-dd HH24:MI')
+		and ntcn_send_yn = 'Y'
+		<if test="type != null">
+			<include refid="typeSQL" />
+		</if>
+		order by ntcn_dt desc
+	</select>
+	
+	<select id="selectNotReadNotiList" parameterType="int" resultType="notificationVO">
+		select 
+			ntcn_no
+			, ntcn_recp
+			, ntcn_type_code
+			, ntcn_content
+			, ntcn_url
+			, ntcn_read_dt
+		    , ntcn_dt local_dt
+		    , TO_CHAR(ntcn_dt, 'yyyy-MM-dd HH24:MI') ntcn_dt
+		    , ntcn_send_yn
+		from notification
+		where ntcn_recp = #{emplNo}
+		and ntcn_read_dt is null
+		and sysdate > ntcn_dt
+		order by ntcn_dt desc
+	</select>
+	
+	<select id="selectNotReadNotiFive" parameterType="int" resultType="notificationVO">
+		SELECT * FROM (
+		    SELECT 
+		        ntcn_no
+		        , ntcn_recp
+		        , ntcn_type_code
+				, CASE WHEN LENGTH(ntcn_content) > 25 THEN SUBSTR(ntcn_content, 1, 25) || '...' ELSE ntcn_content END as ntcn_content
+		        , ntcn_url
+		        , ntcn_read_dt
+			    , ntcn_dt local_dt
+			    , TO_CHAR(ntcn_dt, 'yyyy-MM-dd HH24:MI') ntcn_dt
+		    	, ntcn_send_yn
+		    FROM notification
+		    WHERE ntcn_recp = #{emplNo}
+		    AND ntcn_read_dt is null
+		    AND sysdate > ntcn_dt
+		    ORDER BY ntcn_dt DESC 
+		) 
+		<![CDATA[
+			WHERE ROWNUM <= 5
+		]]>
+	</select>
+	
+	<update id="notiRead" parameterType="notificationVO">
+		update notification
+		set ntcn_read_dt = CURRENT_TIMESTAMP
+		where ntcn_no = #{ntcnNo}
+	</update>
+	
+	<delete id="notiDelete" parameterType="notificationVO">
+		delete 
+		from notification
+		where ntcn_no = #{ntcnNo}	
+	</delete>
+</mapper>

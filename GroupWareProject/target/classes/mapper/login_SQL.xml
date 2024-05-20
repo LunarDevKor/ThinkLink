@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.groupware.mapper.conn.ILoginMapper">
+
+	<resultMap type="employeeVO" id="employeeMap">
+		<id property="emplNo" column="empl_no" />
+		<result property="emplNo" column="empl_no" />
+		<result property="clsfCode" column="clsf_code" />
+		<result property="clsfNm" column="clsf_nm" />
+		<result property="deptCode" column="dept_code" />
+		<result property="deptNm" column="dept_nm" />
+		<result property="emplNm" column="empl_nm" />
+		<result property="emplId" column="empl_id" />
+		<result property="emplPassword" column="empl_password" />
+		<result property="emplZip" column="empl_zip" />
+		<result property="emplAdres" column="empl_adres" />
+		<result property="emplAdres2" column="empl_adres2" />
+		<result property="emplEmail" column="empl_email" />
+		<result property="emplTelno" column="empl_telno" />
+		<result property="emplIhidnum" column="empl_ihidnum" />
+		<result property="emplProflPhoto" column="empl_profl_photo" />
+		<result property="emplSign" column="empl_sign" />
+		<result property="enabled" column="enabled" />
+		<result property="emplEncpn" column="empl_encpn" />
+		<result property="rgsde" column="rgsde" />
+		<result property="register" column="register" />
+		<result property="updde" column="updde" />
+		<result property="updusr" column="updusr" />
+		<collection property="authList" resultMap="empAuthorityMap" />
+	</resultMap>
+
+	<resultMap type="empAuthorityVO" id="empAuthorityMap">
+		<result property="authorNo" column="author_no" />
+		<result property="emplNo" column="empl_no" />
+		<result property="authorNm" column="author_nm" />
+		<result property="useYn" column="use_yn" />
+	</resultMap>
+
+	<select id="readByEmployeeId" parameterType="string" resultMap="employeeMap">
+		select
+			e.empl_no, e.clsf_code, d.clsf_nm as clsf_nm, e.dept_code, c.cmmn_code_name1 as dept_nm, empl_nm, empl_id, empl_password,
+			empl_zip, empl_adres, empl_adres2, empl_email, empl_telno,
+			empl_ihidnum, empl_profl_photo, empl_sign, enabled,
+			empl_encpn, e.rgsde, e.register, e.updde, e.updusr,
+			a.author_nm
+		from employee e
+		left outer join emp_authority a on (e.empl_no = a.empl_no)
+		left join comm_code c on (e.dept_code = c.cmmn_code)
+		left join class_of_position d on (e.clsf_code = d.clsf_code)
+		where empl_id = #{emplId}
+		and enabled = 1
+	</select>
+
+</mapper>

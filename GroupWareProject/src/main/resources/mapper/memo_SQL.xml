@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.groupware.mapper.memo.IMemoMapper">
+	
+	<insert id="addMemo" parameterType="memoVO" useGeneratedKeys="true">
+	
+		<selectKey keyProperty="memoNo" resultType="int" order="BEFORE">
+			select seq_memo.nextval from dual
+		</selectKey>
+		INSERT INTO MEMO(
+			  MEMO_NO   
+			 ,EMPL_NO   
+			 ,MEMO_CN   
+			 ,MEMO_IMPRTNC_YN 
+			 ,MEMO_DEL_YN
+			 ,MEMO_DT
+			 ,ATCH_FILE_GRPUP_NO)
+		 VALUES(
+			 #{memoNo}
+			 ,#{emplNo}
+			 ,#{memoCn}
+			 ,'N'
+			 ,'N'
+			 ,sysdate
+			 ,#{atchFileGrpupNo}
+ 		 )
+	</insert>
+
+
+	<select id="getNotesList" parameterType="int" resultType="memoVO">
+		SELECT
+		    m.MEMO_NO,
+		    m.MEMO_CN,
+		    m.MEMO_IMPRTNC_YN,
+		    m.MEMO_DEL_YN,
+		    TO_CHAR(m.MEMO_DT, 'yy-MM-dd HH24:MI') memo_dt,
+		    m.ATCH_FILE_GRPUP_NO,
+		    af.ATCH_FILE_PATH as IMG_FILE_PATH
+		FROM MEMO m
+		LEFT JOIN ATTACH_FILE af ON m.ATCH_FILE_GRPUP_NO = af.ATCH_FILE_GROUP_NO
+		LEFT JOIN (
+		    SELECT
+		        ATCH_FILE_GROUP_NO,
+		        MAX(ATCH_FILE_NO) AS MAX_FILE_NO
+		    FROM ATTACH_FILE
+		    GROUP BY ATCH_FILE_GROUP_NO
+		) latest ON af.ATCH_FILE_GROUP_NO = latest.ATCH_FILE_GROUP_NO AND af.ATCH_FILE_NO = latest.MAX_FILE_NO
+		WHERE m.EMPL_NO = #{emplNo}
+		 
+		ORDER BY m.MEMO_NO DESC
+	</select>	
+	 <!-- 메모 상세 정보 조회 쿼리 -->
+    <select id="getNoteOne" parameterType="map" resultType="memoVO">
+		 WITH LatestAttachFile AS (
+		    SELECT
+		        ATCH_FILE_GROUP_NO,
+		        MAX(ATCH_FILE_NO) AS MaxFileNo
+		    FROM ATTACH_FILE
+		    GROUP BY ATCH_FILE_GROUP_NO
+			)
+			SELECT
+			    m.MEMO_NO,
+			    m.EMPL_NO,
+			    m.MEMO_CN,
+			    m.MEMO_IMPRTNC_YN,
+			    m.MEMO_DEL_YN,
+			    TO_CHAR(m.MEMO_DT, 'yy-MM-dd HH24:MI') memo_dt,
+			    m.ATCH_FILE_GRPUP_NO,
+			    af.ATCH_FILE_NO,
+			    af.ATCH_FILE_NM,
+			    af.ATCH_FILE_ORNL_FILE_NM,
+			    af.ATCH_FILE_SIZE,
+			    af.ATCH_FILE_FANCYSIZE,
+			    af.ATCH_FILE_EXTSN,
+			    af.ATCH_FILE_DATE,
+			    af.ATCH_FILE_PATH
+			FROM MEMO m
+			LEFT JOIN ATTACH_FILE af ON m.ATCH_FILE_GRPUP_NO = af.ATCH_FILE_GROUP_NO
+			AND af.ATCH_FILE_NO IN (SELECT MaxFileNo FROM LatestAttachFile WHERE ATCH_FILE_GROUP_NO = m.ATCH_FILE_GRPUP_NO)
+			WHERE m.MEMO_NO = #{memoNo}
+    </select>
+    <!--메모수정  -->
+    <update id="updateMemo" parameterType="memoVO">
+	    UPDATE MEMO
+	    SET
+	        MEMO_CN = #{memoCn},
+	        ATCH_FILE_GRPUP_NO = #{atchFileGrpupNo},
+	        MEMO_DT = sysdate
+	    WHERE 
+	        MEMO_NO = #{memoNo}
+	</update>
+
+	<!-- 메모삭제 -->
+   <delete id="deleteMemo" parameterType="int">
+	    DELETE FROM MEMO
+	    WHERE MEMO_NO = #{memoNo}
+	</delete>
+	
+<!-- 	즐겨찾기추가   -->
+	
+<!-- 	<update id="toggleFavorite" parameterType="int"> -->
+<!--     UPDATE MEMO -->
+<!--     SET MEMO_IMPRTNC_YN = CASE MEMO_IMPRTNC_YN WHEN 'N' THEN 'Y' ELSE 'N' END -->
+<!--     WHERE memo_no = #{memoNo} -->
+<!-- 	</update>  -->
+
+<!-- 	Favorite a memo -->
+		<update id="favoriteMemo" parameterType="int">
+		    UPDATE MEMO
+		    SET MEMO_IMPRTNC_YN = 'Y'
+		    WHERE memo_no = #{memoNo} AND empl_no = #{emplNo}
+		</update>
+
+<!-- Unfavorite a memo -->
+		<update id="unfavoriteMemo" parameterType="int">
+		    UPDATE MEMO
+		    SET MEMO_IMPRTNC_YN = 'N'
+		    WHERE memo_no = #{memoNo} AND empl_no = #{emplNo}
+		</update>
+
+
+	<!--휴지통이동  -->
+	<update id="moveToTrash" parameterType="int">
+    UPDATE MEMO
+    SET MEMO_DEL_YN = CASE MEMO_DEL_YN WHEN 'N' THEN 'Y' ELSE 'N' END
+    WHERE memo_no = #{memoNo}
+	</update>
+    <!--즐겨찾기추가함 조회  -->
+	<select id="getImportantMemos" parameterType="int" resultType="memoVO">
+	SELECT
+		    m.MEMO_NO,
+		    m.MEMO_CN,
+		    m.MEMO_IMPRTNC_YN,
+		    m.MEMO_DEL_YN,
+		    TO_CHAR(m.MEMO_DT, 'yy-MM-dd HH24:MI') memo_dt,
+		    m.ATCH_FILE_GRPUP_NO,
+		    af.ATCH_FILE_PATH as IMG_FILE_PATH
+		FROM MEMO m
+		LEFT JOIN ATTACH_FILE af ON m.ATCH_FILE_GRPUP_NO = af.ATCH_FILE_GROUP_NO
+		LEFT JOIN (
+		    SELECT
+		        ATCH_FILE_GROUP_NO,
+		        MAX(ATCH_FILE_NO) AS MAX_FILE_NO
+		    FROM ATTACH_FILE
+		    GROUP BY ATCH_FILE_GROUP_NO
+		) latest ON af.ATCH_FILE_GROUP_NO = latest.ATCH_FILE_GROUP_NO AND af.ATCH_FILE_NO = latest.MAX_FILE_NO
+		WHERE m.MEMO_IMPRTNC_YN = 'Y' AND m.EMPL_NO = #{emplNo}
+		 
+		ORDER BY m.MEMO_NO DESC
+	</select>
+	<select id="getTrashMemos" parameterType="int" resultType="memoVO">
+		SELECT
+			    m.MEMO_NO,
+			    m.MEMO_CN,
+			    m.MEMO_IMPRTNC_YN,
+			    m.MEMO_DEL_YN,
+			    TO_CHAR(m.MEMO_DT, 'yy-MM-dd HH24:MI') memo_dt,
+			    m.ATCH_FILE_GRPUP_NO,
+			    af.ATCH_FILE_PATH as IMG_FILE_PATH
+			FROM MEMO m
+			LEFT JOIN ATTACH_FILE af ON m.ATCH_FILE_GRPUP_NO = af.ATCH_FILE_GROUP_NO
+			LEFT JOIN (
+			    SELECT
+			        ATCH_FILE_GROUP_NO,
+			        MAX(ATCH_FILE_NO) AS MAX_FILE_NO
+			    FROM ATTACH_FILE
+			    GROUP BY ATCH_FILE_GROUP_NO
+			) latest ON af.ATCH_FILE_GROUP_NO = latest.ATCH_FILE_GROUP_NO AND af.ATCH_FILE_NO = latest.MAX_FILE_NO
+			WHERE m.MEMO_DEL_YN = 'Y' AND m.EMPL_NO = #{emplNo}
+			 
+			ORDER BY m.MEMO_NO DESC
+	</select>
+
+
+</mapper>

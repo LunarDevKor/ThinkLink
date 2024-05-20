@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.groupware.mapper.common.ICommonMapper">
+	<select id="totalSearch" parameterType="searchVO" resultType="searchVO">
+		<include refid="selectTotalSearchSQL" />
+	</select>
+	
+	<select id="typeSearch" parameterType="searchVO" resultType="searchVO">
+		<include refid="selectTypeSQL" />
+	</select>
+	
+	<sql id="selectTypeSQL">
+		<if test="searchType == 'all'">
+			<include refid="selectTotalSearchSQL" />
+		</if>
+		<if test="searchType == 'mail'">
+			SELECT r.*, SUM(CNT) OVER () TOTAL_CNT
+            FROM
+            (
+	            SELECT COUNT(*) CNT, EMPL_NO empl_no, '메일' target, email_no target_no, TO_CHAR(EMAIL_NM) contents FROM EMAIL WHERE TO_CHAR(EMAIL_NM) like '%' || #{searchText} || '%'
+				GROUP BY EMPL_NO, EMAIL_NM, email_no
+				UNION ALL
+				<![CDATA[
+					SELECT COUNT(*) CNT, EMPL_NO empl_no, '메일' target, email_no target_no, REGEXP_REPLACE(TO_CHAR(EMAIL_CN), '<[^>]*>', '') contents FROM EMAIL WHERE TO_CHAR(EMAIL_CN) like '%' || #{searchText} || '%'
+				]]>
+				    GROUP BY EMPL_NO, EMAIL_CN, email_no
+            )r
+			WHERE EMPL_NO = #{emplNo}
+		</if>
+		<if test="searchType == 'address'">
+			SELECT r.*, SUM(CNT) OVER () TOTAL_CNT
+			FROM(
+				SELECT COUNT(*) CNT, EMPL_NO empl_no, '주소록' target, NULL target_no, TO_CHAR(ADBK_NM) contents FROM ADDRESSBOOK WHERE TO_CHAR(ADBK_NM) like '%' || #{searchText} || '%'
+				GROUP BY EMPL_NO, ADBK_NM
+			) r
+			WHERE EMPL_NO = #{emplNo}
+		</if>
+		<if test="searchType == 'approval'">
+			SELECT r.*, SUM(CNT) OVER () TOTAL_CNT
+			FROM
+				(
+					SELECT COUNT(*) CNT, EMPL_NO empl_no, '전자결재' target, aprovl_no target_no, TO_CHAR(APROVL_NM) contents FROM APPROVAL WHERE TO_CHAR(APROVL_NM) like '%' || #{searchText} || '%'
+					GROUP BY EMPL_NO, APROVL_NM, aprovl_no
+					UNION ALL
+					SELECT  COUNT(*) CNT, RFRNCER_NO empl_no, '전자결재' target, ar.aprovl_no target_no, TO_CHAR(APROVL_NM) contents
+					FROM APPROVAL_RFRNC AR
+					LEFT OUTER JOIN APPROVAL A ON AR.APROVL_NO = A.APROVL_NO
+					WHERE TO_CHAR(APROVL_NM) like '%' || #{searchText} || '%'
+					GROUP BY RFRNCER_NO, APROVL_NM, ar.aprovl_no
+					UNION ALL
+					SELECT  COUNT(*) CNT, APPROVER_NO empl_no, '전자결재' target, s.aprovl_no target_no, TO_CHAR(APROVL_NM) contents
+					FROM APPROVAL A
+					LEFT OUTER JOIN SANCTIONER S ON A.APROVL_NO = S.APROVL_NO
+					WHERE TO_CHAR(APROVL_NM) like '%' || #{searchText} || '%'
+					GROUP BY APPROVER_NO, APROVL_NM, s.aprovl_no
+				) r
+			WHERE EMPL_NO = #{emplNo}
+		</if>
+		<if test="searchType == 'board'">
+			SELECT r.*, SUM(CNT) OVER () TOTAL_CNT
+			FROM (
+				SELECT COUNT(*) CNT, EMPL_NO empl_no, '게시판' target, bbsctt_no target_no, TO_CHAR(BBSCTT_TITLE) contents FROM BOARD WHERE TO_CHAR(BBSCTT_TITLE) like '%' || #{searchText} || '%'
+				GROUP BY EMPL_NO, BBSCTT_TITLE, bbsctt_no
+				UNION ALL
+				<![CDATA[
+					SELECT COUNT(*) CNT, EMPL_NO empl_no, '게시판' target, bbsctt_no target_no, REGEXP_REPLACE(TO_CHAR(BBSCTT_CN), '<[^>]*>', '') contents FROM BOARD WHERE TO_CHAR(BBSCTT_CN) like '%' || #{searchText} || '%'
+				]]>
+				GROUP BY EMPL_NO, BBSCTT_CN, bbsctt_no
+				UNION ALL
+				SELECT COUNT(*) CNT, EMPL_NO empl_no, '게시판' target, bbsctt_no target_no, TO_CHAR(REPLY_CN) contents FROM ANSWER WHERE TO_CHAR(REPLY_CN) like '%' || #{searchText} || '%'
+				GROUP BY EMPL_NO, REPLY_CN, bbsctt_no
+			) r
+		</if>
+		<if test="searchType == 'schedule'">
+			SELECT r.*, SUM(CNT) OVER () TOTAL_CNT
+			FROM
+			(
+				SELECT COUNT(*) CNT, SP.EMPL_NO empl_no, '일정' target, NULL target_no, TO_CHAR(SCHDUL_NM) contents
+				FROM SCHEDULE S
+				INNER JOIN SCHDUL_PARTICIPANT SP ON S.SCHDUL_NO = SP.SCHDUL_NO
+				WHERE TO_CHAR(SCHDUL_NM) like '%' || #{searchText} || '%'
+				GROUP BY SP.EMPL_NO, SCHDUL_NM
+			) r
+			WHERE EMPL_NO = #{emplNo}
+		</if>
+		<if test="searchType == 'drive'">
+			SELECT r.*, SUM(CNT) OVER () TOTAL_CNT
+			FROM
+			(
+				SELECT COUNT(*) CNT, EMPL_NO empl_no,  '자료실' target, NULL target_no, TO_CHAR(ORGNL_FILENAME) contents FROM DRIVE WHERE TO_CHAR(FILE_NM) like '%' || #{searchText} || '%'
+				GROUP BY EMPL_NO, ORGNL_FILENAME
+				UNION ALL
+				SELECT COUNT(*) CNT, EMPL_NO empl_no,  '자료실' target, NULL target_no, TO_CHAR(FLDR_NM) contents FROM DRIVE_FOLDER WHERE TO_CHAR(FLDR_NM) like '%' || #{searchText} || '%'
+				GROUP BY EMPL_NO, FLDR_NM
+			) r
+			WHERE EMPL_NO = #{emplNo}
+		</if>
+		<if test="searchType == 'noti'">
+			SELECT r.*, SUM(CNT) OVER () TOTAL_CNT
+			FROM
+			(
+				SELECT COUNT(*) CNT, NTCN_RECP empl_no, '알림' target, NULL target_no, TO_CHAR(NTCN_CONTENT) contents FROM NOTIFICATION WHERE TO_CHAR(NTCN_CONTENT) like '%' || #{searchText} || '%'
+				GROUP BY NTCN_RECP, NTCN_CONTENT
+			) r
+			WHERE EMPL_NO = #{emplNo}
+		</if>
+		<if test="searchType == 'project'">
+			SELECT r.*, SUM(CNT) OVER () TOTAL_CNT
+			FROM
+			(
+				SELECT COUNT(*) CNT, EMPL_NO empl_no, '프로젝트' target, prjct_no target_no, TO_CHAR(PRJCT_NM) contents FROM PROJECT WHERE TO_CHAR(PRJCT_NM) like '%' || #{searchText} || '%'
+				GROUP BY EMPL_NO, PRJCT_NM, prjct_no
+				UNION ALL
+				SELECT COUNT(*) CNT, EMPL_NO empl_no, '프로젝트' target, prjct_no target_no, TO_CHAR(TASK_NM) contents FROM TASK WHERE TO_CHAR(TASK_NM) like '%' || #{searchText} || '%'
+				GROUP BY EMPL_NO, TASK_NM, prjct_no
+			) r
+			WHERE EMPL_NO = #{emplNo}
+		</if>
+	</sql>
+	
+	<sql id="selectTotalSearchSQL">
+		<if test="searchText != null and searchText != ''">
+			SELECT
+			    empl_no
+			  , target
+			  , target_no
+			  , contents
+			  , SUM(cnt)
+			      OVER() total_cnt
+			FROM
+			    (
+			        SELECT
+			            COUNT(*)              cnt
+			          , empl_no               empl_no
+			          , '게시판'                 target
+			          , bbsctt_no             target_no
+			          , to_char(bbsctt_title) contents
+			        FROM
+			            board
+			        WHERE
+			            to_char(bbsctt_title) LIKE '%'
+			                                       || #{searchText}
+			                                       || '%'
+			        GROUP BY
+			            empl_no
+			          , bbsctt_no
+			          , bbsctt_title
+			        UNION ALL
+			        SELECT
+			            COUNT(*)                                          cnt
+			          , empl_no                                           empl_no
+			          , '게시판'                                             target
+			          , bbsctt_no                                         target_no
+			          <![CDATA[
+			          , regexp_replace(to_char(bbsctt_cn), '<[^>]*>', '') contents
+			          ]]>
+			        FROM
+			            board
+			        WHERE
+			            to_char(bbsctt_cn) LIKE '%'
+			                                    || #{searchText}
+			                                    || '%'
+			        GROUP BY
+			            empl_no
+			          , bbsctt_no
+			          , bbsctt_cn
+			        UNION ALL
+			        SELECT
+			            COUNT(*)          cnt
+			          , empl_no           empl_no
+			          , '게시판'             target
+			          , bbsctt_no         target_no
+			          , to_char(reply_cn) contents
+			        FROM
+			            answer
+			        WHERE
+			            to_char(reply_cn) LIKE '%'
+			                                   || #{searchText}
+			                                   || '%'
+			        GROUP BY
+			            empl_no
+			          , bbsctt_no
+			          , reply_cn
+			    ) a
+			UNION ALL
+			SELECT
+			    rr.*
+			FROM
+			    (
+			        SELECT
+			            empl_no
+			          , target
+			          , target_no
+			          , contents
+			          , SUM(cnt)
+			              OVER() total_cnt
+			        FROM
+			            (
+			                SELECT
+			                    r.*
+			                FROM
+			                    (
+			                        SELECT
+			                            COUNT(*)         cnt
+			                          , empl_no          empl_no
+			                          , '주소록'            target
+			                          , NULL             target_no
+			                          , to_char(adbk_nm) contents
+			                        FROM
+			                            addressbook
+			                        WHERE
+			                            to_char(adbk_nm) LIKE '%'
+			                                                  || #{searchText}
+			                                                  || '%'
+			                        GROUP BY
+			                            empl_no
+			                          , adbk_nm
+			                        UNION ALL
+			                        SELECT
+			                            COUNT(*)                cnt
+			                          , empl_no                 empl_no
+			                          , '자료실'                   target
+			                          , NULL                    target_no
+			                          , to_char(orgnl_filename) contents
+			                        FROM
+			                            drive
+			                        WHERE
+			                            to_char(file_nm) LIKE '%'
+			                                                  || #{searchText}
+			                                                  || '%'
+			                        GROUP BY
+			                            empl_no
+			                          , orgnl_filename
+			                        UNION ALL
+			                        SELECT
+			                            COUNT(*)         cnt
+			                          , empl_no          empl_no
+			                          , '자료실'            target
+			                          , NULL             target_no
+			                          , to_char(fldr_nm) contents
+			                        FROM
+			                            drive_folder
+			                        WHERE
+			                            to_char(fldr_nm) LIKE '%'
+			                                                  || #{searchText}
+			                                                  || '%'
+			                        GROUP BY
+			                            empl_no
+			                          , fldr_nm
+			                        UNION ALL
+			                        SELECT
+			                            COUNT(*)          cnt
+			                          , empl_no           empl_no
+			                          , '메일'              target
+			                          , email_no          target_no
+			                          , to_char(email_nm) contents
+			                        FROM
+			                            email
+			                        WHERE
+			                            to_char(email_nm) LIKE '%'
+			                                                   || #{searchText}
+			                                                   || '%'
+			                        GROUP BY
+			                            empl_no
+			                          , email_nm
+			                          , email_no
+			                        UNION ALL
+			                        SELECT
+			                            COUNT(*)                                         cnt
+			                          , empl_no                                          empl_no
+			                          , '메일'                                             target
+			                          , email_no                                         target_no
+			                          <![CDATA[
+			                          , regexp_replace(to_char(email_cn), '<[^>]*>', '') contents
+			                          ]]>
+			                        FROM
+			                            email
+			                        WHERE
+			                            to_char(email_cn) LIKE '%'
+			                                                   || #{searchText}
+			                                                   || '%'
+			                        GROUP BY
+			                            empl_no
+			                          , email_cn
+			                          , email_no
+			                        UNION ALL
+			                        SELECT
+			                            COUNT(*)              cnt
+			                          , ntcn_recp             empl_no
+			                          , '알림'                  target
+			                          , NULL                  target_no
+			                          , to_char(ntcn_content) contents
+			                        FROM
+			                            notification
+			                        WHERE
+			                            to_char(ntcn_content) LIKE '%'
+			                                                       || #{searchText}
+			                                                       || '%'
+			                        GROUP BY
+			                            ntcn_recp
+			                          , ntcn_content
+			                        UNION ALL
+			                        SELECT
+			                            COUNT(*)          cnt
+			                          , empl_no           empl_no
+			                          , '프로젝트'            target
+			                          , prjct_no          target_no
+			                          , to_char(prjct_nm) contents
+			                        FROM
+			                            project
+			                        WHERE
+			                            to_char(prjct_nm) LIKE '%'
+			                                                   || #{searchText}
+			                                                   || '%'
+			                        GROUP BY
+			                            empl_no
+			                          , prjct_nm
+			                          , prjct_no
+			                        UNION ALL
+			                        SELECT
+			                            COUNT(*)           cnt
+			                          , sp.empl_no         empl_no
+			                          , '일정'               target
+			                          , NULL               target_no
+			                          , to_char(schdul_nm) contents
+			                        FROM
+			                                 schedule s
+			                            INNER JOIN schdul_participant sp ON s.schdul_no = sp.schdul_no
+			                        WHERE
+			                            to_char(schdul_nm) LIKE '%'
+			                                                    || #{searchText}
+			                                                    || '%'
+			                        GROUP BY
+			                            sp.empl_no
+			                          , schdul_nm
+			                        UNION ALL
+			                        SELECT
+			                            COUNT(*)         cnt
+			                          , empl_no          empl_no
+			                          , '프로젝트'           target
+			                          , task_no          target_no
+			                          , to_char(task_nm) contents
+			                        FROM
+			                            task
+			                        WHERE
+			                            to_char(task_nm) LIKE '%'
+			                                                  || #{searchText}
+			                                                  || '%'
+			                        GROUP BY
+			                            empl_no
+			                          , task_nm
+			                          , task_no
+			                        UNION ALL
+			                        SELECT
+			                            COUNT(*)           cnt
+			                          , empl_no            empl_no
+			                          , '전자결재'             target
+			                          , aprovl_no          target_no
+			                          , to_char(aprovl_nm) contents
+			                        FROM
+			                            approval
+			                        WHERE
+			                            to_char(aprovl_nm) LIKE '%'
+			                                                    || #{searchText}
+			                                                    || '%'
+			                        GROUP BY
+			                            empl_no
+			                          , aprovl_nm
+			                          , aprovl_no
+			                        UNION ALL
+			                        SELECT
+			                            COUNT(*)           cnt
+			                          , rfrncer_no         empl_no
+			                          , '전자결재'             target
+			                          , ar.aprovl_no       target_no
+			                          , to_char(aprovl_nm) contents
+			                        FROM
+			                            approval_rfrnc ar
+			                            LEFT OUTER JOIN approval       a ON ar.aprovl_no = a.aprovl_no
+			                        WHERE
+			                            to_char(aprovl_nm) LIKE '%'
+			                                                    || #{searchText}
+			                                                    || '%'
+			                        GROUP BY
+			                            rfrncer_no
+			                          , aprovl_nm
+			                          , ar.aprovl_no
+			                        UNION ALL
+			                        SELECT
+			                            COUNT(*)           cnt
+			                          , approver_no        empl_no
+			                          , '전자결재'             target
+			                          , s.aprovl_no        target_no
+			                          , to_char(aprovl_nm) contents
+			                        FROM
+			                            approval   a
+			                            LEFT OUTER JOIN sanctioner s ON a.aprovl_no = s.aprovl_no
+			                        WHERE
+			                            to_char(aprovl_nm) LIKE '%'
+			                                                    || #{searchText}
+			                                                    || '%'
+			                        GROUP BY
+			                            approver_no
+			                          , aprovl_nm
+			                          , s.aprovl_no
+			                        UNION ALL
+			                        SELECT
+			                            COUNT(*)         cnt
+			                          , empl_no          empl_no
+			                          , '메모'             target
+			                          , NULL             target_no
+			                          , to_char(memo_cn) contents
+			                        FROM
+			                            memo
+			                        WHERE
+			                            to_char(memo_cn) LIKE '%'
+			                                                  || #{searchText}
+			                                                  || '%'
+			                        GROUP BY
+			                            empl_no
+			                          , memo_cn
+			                    ) r
+			            )
+			        WHERE
+			            empl_no = #{emplNo}
+			    ) rr
+		</if>
+	</sql>
+</mapper>

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<settings>
+		<setting name="mapUnderscoreToCamelCase" value="true"/>
+		<setting name="jdbcTypeForNull" value="NULL"/>
+	</settings>
+	
+	<typeAliases>
+		<!-- 공통 관련 Alias 시작 -->
+		<typeAlias type="kr.or.ddit.groupware.vo.SearchVO" alias="searchVO"/>
+		<!-- 공통 관련 Alias 끝 -->
+	
+		<!-- 사원 관련 Alias 시작 -->
+		<typeAlias type="kr.or.ddit.groupware.vo.EmployeeVO" alias="employeeVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.ClassOfPositionVO" alias="classOfPositionVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.EmpAuthorityVO" alias="empAuthorityVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.EmployeeEstbsVO" alias="employeeEstbsVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.DeptVO" alias="deptVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.EmployeeDetailVO" alias="employeeDetailVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.DclzVO" alias="dclzVO"/>
+		<!-- 사원 관련 Alias 끝 -->
+		
+		<!-- 위젯 관련 Alias 시작 -->
+		<typeAlias type="kr.or.ddit.groupware.vo.WidgetVO" alias="widgetVO"/>
+		<!-- 위젯 관련 Alias 끝 -->
+		
+		<!-- 게시판 관련 Alias 시작 -->
+		<typeAlias type="kr.or.ddit.groupware.vo.BoardVO" alias="boardVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.AnswerVO" alias="answerVO"/>
+		<!-- 게시판 관련 Alias 끝 -->
+		
+		<!-- 프로젝트 관련 Alias 시작 -->
+		<typeAlias type="kr.or.ddit.groupware.vo.ProjectVO" alias="projectVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.PrjctSchdulVO" alias="prjctSchdulVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.TaskVO" alias="taskVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.ProjectReportVO" alias="projectReportVO"/>
+		<!-- 프로젝트 관련 Alias 끝 -->
+		
+		<!-- 일정 관련 Alias 시작 -->
+		<typeAlias type="kr.or.ddit.groupware.vo.ScheduleVO" alias="scheduleVO"/>
+		<!-- 일정 관련 Alias 끝 -->
+		
+		<!-- 이메일 관련 Alias 시작 -->
+		<typeAlias type="kr.or.ddit.groupware.vo.EmailVO" alias="emailVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.EmailReceptionVO" alias="emailReceptionVO"/>
+		<!-- 이메일 관련 Alias 끝 -->
+		
+		<!-- 첨부파일 관련 Alias 시작 -->
+		<typeAlias type="kr.or.ddit.groupware.vo.AttachFileGroupVO" alias="attachFileGroupVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.AttachFileVO" alias="attachFileVO"/>
+		<!-- 첨부파일 관련 Alias 끝 -->
+		
+		<!-- 주소록 관련 Alias 시작 -->
+		<typeAlias type="kr.or.ddit.groupware.vo.AddressBookVO" alias="addressBookVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.AddressGroupVO" alias="addressGroupVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.AddressGroupMappingVO" alias="addressGroupMappingVO"/>
+		<!-- 주소록 관련 Alias 끝 -->
+		
+		<!-- 전자 결재 관련 Alias 시작 -->
+		<typeAlias type="kr.or.ddit.groupware.vo.ApprovalVO" alias="approvalVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.DocumentsVO" alias="documentsVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.DocBookmarkVO" alias="docBookmarkVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.SanctionerBookmarkGroupVO" alias="sanctionerBookmarkGroupVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.SanctionerBookmarkVO" alias="sanctionerBookmarkVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.SanctionerBookmarkRefVO" alias="sanctionerBookmarkRefVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.SanctionerVO" alias="sanctionerVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.ApprovalRfrncVO" alias="rfrncVO"/>
+		<!-- 전자 결재 관련 Alias 끝 -->
+		
+		<!-- 자료실 관련 Alias 시작 -->
+		<typeAlias type="kr.or.ddit.groupware.vo.DriveVO" alias="driveVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.DriveFolderVO" alias="driveFolderVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.DriveFileVO" alias="driveFileVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.DriveItemVO" alias="driveItemVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.LogVO" alias="logVO"/>
+		<!-- 자료실 관련 Alias 끝 -->
+		
+		<!-- 메모 관련 Alias 시작 -->
+		<typeAlias type="kr.or.ddit.groupware.vo.MemoVO" alias="memoVO"/>
+		<!-- 메모 관련 Alias 끝 -->
+		
+		<!-- 채팅 관련 Alias 시작 -->
+		<typeAlias type="kr.or.ddit.groupware.vo.ChatListVO" alias="chatListVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.MessageVO" alias="messageVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.MessageGroupVO" alias="messageGroupVO"/>
+		<typeAlias type="kr.or.ddit.groupware.vo.MessageGroupParticipantVO" alias="messageGroupParticipantVO"/>
+		<!-- 채팅 관련 Alias 끝 -->
+		
+		<!--회의실 예약 관련 Alias시작  -->
+		<typeAlias type="kr.or.ddit.groupware.vo.MtgRoomReservVO" alias="mtgRoomReservVO"/>
+		<!--회의실 예약 관련 Alias끝-->
+		
+		<!--차량비품 대여 관련 Alias시작  -->
+		<typeAlias type="kr.or.ddit.groupware.vo.RentalVO" alias="rentalVO"/>
+		<!--차량비품 대여 관련  Alias끝-->
+		
+		<!--비품재고 관련 Alias시작  -->
+		<typeAlias type="kr.or.ddit.groupware.vo.StockVO" alias="stockVO"/>
+		<!--비품재고 관련 Alias끝-->
+		
+		<!-- 조직도 관련 Alias 시작 -->
+		<typeAlias type="kr.or.ddit.groupware.vo.OrganizationTreeVO" alias="organizationTreeVO"/>
+		<!-- 조직도 관련 Alias 끝 -->
+		
+		<!-- 알림 관련 Alias 시작 -->
+		<typeAlias type="kr.or.ddit.groupware.vo.NotificationVO" alias="notificationVO"/>
+		<!-- 알림 관련 Alias 끝 -->
+		
+		<!-- 근태 관련 Alias 시작 -->
+		<typeAlias type="kr.or.ddit.groupware.vo.DclzStatusVO" alias="dclzStatusVO"/>
+		<!-- 근태 관련 Alias 끝 -->
+		
+		<!-- 페이징 관련 Alias 시작 -->
+		<typeAlias type="kr.or.ddit.groupware.vo.PaginationInfoVO" alias="pagingVO"/>
+		<!-- 페이징 관련 Alias 끝 -->
+
+	</typeAliases>
+	
+</configuration>

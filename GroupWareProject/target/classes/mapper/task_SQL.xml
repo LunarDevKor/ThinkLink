@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.groupware.mapper.project.ITaskMapper">
+	
+	<select id="selectOngoingTaskListByEmplNo" parameterType="Map" resultType="taskVO">
+		select 
+		    task_no,
+		    upper_task_no,
+		    t.prjct_no,
+		    p.prjct_nm,
+		    task_nm,
+		    task_cn,
+		    task_progrs,
+		    task_imprtnc,
+		    task_priort,
+		    task_begin_dt,
+		    task_end_dt,
+			task_last_updde,
+			TO_CHAR(task_begin_dt, 'YYYY-MM-DD') task_begin_dt_str,
+			TO_CHAR(task_end_dt, 'YYYY-MM-DD') task_end_dt_str,
+			TO_CHAR(task_last_updde, 'YYYY-MM-DD') task_last_updde_str,
+		    atch_file_group_no,
+		    pp.prjct_prtcpnt_color_code prjct_color
+		from 
+		    task t, project p, project_participant pp
+		where
+		    p.prjct_no = t.prjct_no
+		    and p.prjct_code = 'P102'
+		    and p.prjct_no = pp.prjct_no
+		    and pp.empl_no = #{emplNo}
+		    and t.empl_no = #{emplNo}
+		    <choose>
+		    	<when test="status == 'todo'">
+		    		and t.task_progrs = 0
+		    	</when>
+		    	<when test="status == 'inProgress'">
+		    		and t.task_progrs > 0
+		    		<![CDATA[ and t.task_progrs < 100 ]]>
+		    	</when>
+		    	<when test="status == 'done'">
+		    		and t.task_progrs = 100
+		    	</when>
+		    </choose>
+	</select>
+	
+	<select id="selectTaskByTaskNo" parameterType="Map" resultType="taskVO">
+		SELECT
+		    task_no,
+		    upper_task_no,
+		    t.prjct_no,
+		    p.prjct_nm,
+		    pp.prjct_prtcpnt_color_code prjct_color,
+		    t.empl_no,
+		    e.empl_nm,
+		    task_nm,
+		    task_cn,
+		    task_progrs,
+		    task_imprtnc,
+		    task_priort,
+		    task_register,
+		    task_rgsde,
+		    task_begin_dt,
+		    task_end_dt,
+		    task_last_updde,
+			TO_CHAR(task_begin_dt, 'YYYY-MM-DD') task_begin_dt_str,
+			TO_CHAR(task_end_dt, 'YYYY-MM-DD') task_end_dt_str,
+			TO_CHAR(task_last_updde, 'YYYY-MM-DD') task_last_updde_str,
+		    atch_file_group_no
+		FROM
+		    task t, employee e, project_participant pp, project p
+		where
+		    t.empl_no = e.empl_no
+		    and t.prjct_no = pp.prjct_no
+		    and t.prjct_no = p.prjct_no
+		    and pp.empl_no = #{emplNo}
+		    and task_no = #{taskNo}
+	</select>
+	
+	<select id="selectTaskListByPrjctNo" parameterType="int" resultType="taskVO">
+		SELECT
+		    t.task_no,
+		    t.upper_task_no,
+		    t.prjct_no,
+		    t.empl_no,
+		    e.empl_nm,
+		    t.task_nm,
+		    t.task_progrs,
+		    t.task_imprtnc,
+		    t.task_priort,
+		    t.task_register,
+		    t.task_rgsde,
+		    t.task_begin_dt,
+		    t.task_end_dt,
+		    t.task_last_updde,
+			TO_CHAR(task_begin_dt, 'YYYY-MM-DD') task_begin_dt_str,
+			TO_CHAR(task_end_dt, 'YYYY-MM-DD') task_end_dt_str,
+			TO_CHAR(task_last_updde, 'YYYY-MM-DD') task_last_updde_str,
+		    t.atch_file_group_no
+		FROM
+		    task t, employee e
+		where
+		    t.empl_no = e.empl_no
+		    and prjct_no = #{prjctNo}
+		order by t.task_begin_dt
+	</select>
+	
+	<select id="selectTaskCountByStatusNPrjctNo" parameterType="Map" resultType="int">
+		select count(*)
+		from task
+		where
+		    prjct_no = #{prjctNo}	
+		    <choose>
+		    	<when test="status == 'todo'">
+		    		and task_progrs = 0
+		    	</when>
+		    	<when test="status == 'doing'">
+		    		and task_progrs > 0
+		    		<![CDATA[ and task_progrs < 100 ]]>
+		    	</when>
+		    	<when test="status == 'done'">
+		    		and task_progrs = 100
+		    	</when>
+		    </choose>
+	</select>
+	
+	<select id="selectEnddeCnt" parameterType="int" resultType="hashmap">
+			SELECT 
+		    COALESCE(t1.cnt, 0) AS d1,
+		    COALESCE(t2.cnt, 0) AS d2,
+		    COALESCE(t3.cnt, 0) AS d3,
+		    COALESCE(t4.cnt, 0) AS d4,
+		    COALESCE(t5.cnt, 0) AS d5,
+		    COALESCE(t6.cnt, 0) AS d6,
+		    COALESCE(t7.cnt, 0) AS d7
+		FROM 
+		    (SELECT COUNT(*) AS cnt FROM task WHERE TRUNC(task_end_dt) = TRUNC(SYSDATE) and prjct_no = #{prjctNo}) t1 
+		    FULL OUTER JOIN
+		    (SELECT COUNT(*) AS cnt FROM task WHERE TRUNC(task_end_dt) = TRUNC(SYSDATE) + 1 and prjct_no = #{prjctNo}) t2
+		    ON 1=1
+		    FULL OUTER JOIN
+		    (SELECT COUNT(*) AS cnt FROM task WHERE TRUNC(task_end_dt) = TRUNC(SYSDATE) + 2 and prjct_no = #{prjctNo}) t3
+		    ON 1=1
+		    FULL OUTER JOIN
+		    (SELECT COUNT(*) AS cnt FROM task WHERE TRUNC(task_end_dt) = TRUNC(SYSDATE) + 3 and prjct_no = #{prjctNo}) t4
+		    ON 1=1
+		    FULL OUTER JOIN
+		    (SELECT COUNT(*) AS cnt FROM task WHERE TRUNC(task_end_dt) = TRUNC(SYSDATE) + 4 and prjct_no = #{prjctNo}) t5
+		    ON 1=1
+		    FULL OUTER JOIN
+		    (SELECT COUNT(*) AS cnt FROM task WHERE TRUNC(task_end_dt) = TRUNC(SYSDATE) + 5 and prjct_no = #{prjctNo}) t6
+		    ON 1=1
+		    FULL OUTER JOIN
+		    (SELECT COUNT(*) AS cnt FROM task WHERE TRUNC(task_end_dt) = TRUNC(SYSDATE) + 6 and prjct_no = #{prjctNo}) t7
+		    ON 1=1
+	</select>
+	
+	<select id="selectTaskListByUpperTaskNo" parameterType="Map" resultType="taskVO">
+		SELECT
+		    task_no,
+		    upper_task_no,
+		    prjct_no,
+		    empl_no,
+		    task_nm,
+		    task_cn,
+		    task_progrs,
+		    task_imprtnc,
+		    task_priort,
+		    task_register,
+		    task_rgsde,
+		    task_begin_dt,
+		    task_end_dt,
+		    task_last_updde,
+		    atch_file_group_no
+		FROM
+		    task
+		where
+		    prjct_no = #{prjctNo}
+		    <choose>
+		    	<when test="upperTaskNo == 0">
+		    		and upper_task_no is null
+		    	</when>
+		    	<when test="upperTaskNo != 0">
+		    		and upper_task_no = #{upperTaskNo}
+		    	</when>
+		    </choose>	
+	</select>
+	
+	<insert id="insertTask" parameterType="taskVO">
+		INSERT INTO task (
+		    task_no,
+		    upper_task_no,
+		    prjct_no,
+		    empl_no,
+		    task_nm,
+		    task_cn,
+		    task_progrs,
+		    task_imprtnc,
+		    task_priort,
+		    task_register,
+		    task_begin_dt,
+		    task_end_dt
+		) VALUES (
+		    SEQ_TASK.nextval,
+		    null,
+		    #{prjctNo},
+		    #{emplNo},
+		    #{taskNm},
+		    #{taskCn},
+		    '0',
+		    #{taskImprtnc},
+		    #{taskPriort},
+		    #{taskRegister},
+		    TO_DATE(#{taskBeginDtStr},'yyyy-mm-dd'),
+		    TO_DATE(#{taskEndDtStr},'yyyy-mm-dd')
+		)
+	</insert>
+	
+	<update id="updateTaskProgrs" parameterType="taskVO">
+		update task
+		set task_progrs = #{taskProgrs}
+		where task_no = #{taskNo}
+	</update>
+	
+	<!-- 통계 관련 시작 -->
+	
+	<!-- 업무 타입별 가져오기 -->
+	<select id="selectProjectTaskTypeList" parameterType="taskVO" resultType="taskVO">
+		SELECT
+		    '대기' task_type,
+		    COUNT(task_no) count
+		FROM
+		    task
+		WHERE
+		        prjct_no = #{prjctNo}
+		    AND task_progrs = 0
+		UNION ALL
+		SELECT
+		    '진행중' task_type,
+		    COUNT(task_no) count
+		FROM
+		    task
+		WHERE
+	        prjct_no = #{prjctNo}
+		AND	task_progrs BETWEEN 1 and 99
+		UNION ALL
+		SELECT
+		    '완료' task_type,
+		    COUNT(task_no) count
+		FROM
+		    task
+		WHERE
+		        prjct_no = #{prjctNo}
+		    AND task_progrs = 100
+	</select>
+	
+	<!-- 타입 별 사원 작업 진행도 -->
+	
+	<select id="selectProjectTaskDetailList" parameterType="taskVO" resultType="taskVO">
+		SELECT
+		    COUNT(task_no) count,
+		    empl_nm
+		FROM
+		         task t
+		    INNER JOIN employee e ON e.empl_no = t.empl_no
+		WHERE
+		        prjct_no = #{prjctNo}
+		<include refid="detailOptionSQL" />
+		GROUP BY
+		    empl_nm
+	</select>
+	
+	<!-- 사원 업무 수 -->
+	
+	<select id="selectProjectTaskCountForEmployee" parameterType="taskVO" resultType="taskVO">
+		SELECT
+		    COUNT(*) count
+		FROM
+		    task
+		WHERE
+		        prjct_no = #{prjctNo}
+		    AND empl_no = #{emplNo}
+	</select>
+	
+	<select id="selectProjectTaskClosingForEmployee" parameterType="taskVO" resultType="taskVO">
+		SELECT
+		    round((COUNT(*) - SUM(
+		        CASE
+		        	<![CDATA[
+			            WHEN task_end_dt <= current_date THEN
+		        	]]>
+		                1
+		            ELSE
+		                0
+		        END
+		    )) / COUNT(*) * 100, 1) AS rate
+		FROM
+		    task
+		WHERE
+		        empl_no = #{emplNo}
+		    AND prjct_no = #{prjctNo}
+	</select>
+	
+	<!-- 통계 관련 끝 -->
+	
+	<sql id="detailOptionSQL">
+		<if test="taskType == '대기'">
+			AND task_progrs = 0
+		</if>		        
+		<if test="taskType == '진행중'">
+		    AND task_progrs BETWEEN 1 AND 99
+		</if>		        
+		<if test="taskType == '완료'">
+			AND task_progrs = 100
+		</if>	
+	</sql>
+</mapper>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+	
+	<!-- Root Context: defines shared resources visible to all other web components -->
+	
+	<!-- HIKARI CP (데이터 베이스 커넥션풀 라이브러리) 설정 -->
+	<bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
+		<property name="driverClassName" value="net.sf.log4jdbc.sql.jdbcapi.DriverSpy" />
+		<property name="jdbcUrl" value="jdbc:log4jdbc:oracle:thin:@112.220.114.130:1521:xe" />
+		<property name="username" value="team3_202310F" />
+		<property name="password" value="java" />
+		<property name="minimumIdle" value="5" />
+		<property name="maximumPoolSize" value="6" />
+	</bean>
+	
+	<!-- HIKARI CP DATASOURCE 라이브러리에 CONFIG등록 -->
+	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
+		<constructor-arg ref="hikariConfig" />
+	</bean>
+	
+	<!-- DATASOUCE 등록 / Mapper 및 CONFIG 경로 설정 -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"/>
+		<property name="mapperLocations" value="classpath:/mapper/**/*.xml"/>
+		<property name="configLocation" value="classpath:/config/mybatis-config.xml"/>
+	</bean>
+	
+	<!-- Mapper 베이스 패키지 설정 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="kr.or.ddit.groupware.mapper"/>
+	</bean>
+	
+	 <!-- MultipartFile CommonsMultipartResolver 설정 -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+	 	<!-- 하나의 요청당 파일 업로드 용량(100MB) -->
+		<property name="maxUploadSize" value="104857600" />
+	 	<!-- 메모리에 저장되는 최대 용량(100MB) -->
+	 	<property name="maxInMemorySize" value="104857600" />
+	 	<!-- 인코딩 설정 -->
+	 	<property name="defaultEncoding" value="UTF-8" />
+	</bean>
+	
+	<!-- 트랜잭션 매니저 Bean 정의 DATASOURCE 등록 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+	  	<property name="dataSource" ref="dataSource" />
+	</bean>
+	
+	<tx:annotation-driven />
+	
+	<bean id="path" class="java.lang.String">
+		<constructor-arg value="C:/upload/"/>
+	</bean>
+</beans>

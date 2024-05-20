@@ -1,0 +1,512 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="kr.or.ddit.groupware.mapper.addressbook.IAddressBookMapper">
+
+	<sql id="addressSearch">
+		<if test="searchType != null and searchType == 'all'">
+			and(
+			ab.ADBK_NM LIKE '%'||#{searchWord}||'%'
+			OR
+			ab.ADBK_CMPNY LIKE '%'||#{searchWord}||'%'
+			OR c.cmmn_code_name1 LIKE
+			'%'||#{searchWord}||'%'
+			OR ab.ADBK_EMAIL LIKE '%'||#{searchWord}||'%'
+			OR ab.ADBK_TELNO LIKE '%'||#{searchWord}||'%'
+			OR ab.ADBK_MEMO LIKE
+			'%'||#{searchWord}||'%'
+			)
+		</if>
+	</sql>
+	
+	<sql id="addressSearch2">
+		<if test="searchType != null and searchType == 'all'">
+			and(
+			ab.ADBK_NM LIKE '%'||#{searchWord}||'%'
+			OR
+			ab.ADBK_CMPNY LIKE '%'||#{searchWord}||'%'
+			OR ab.ADBK_EMAIL LIKE '%'||#{searchWord}||'%'
+			OR ab.ADBK_TELNO LIKE '%'||#{searchWord}||'%'
+			OR ab.ADBK_MEMO LIKE '%'||#{searchWord}||'%'
+			)
+		</if>
+	</sql>
+
+
+	<resultMap type="addressBookVO" id="addressBookMap">
+		<result property="adbkNo" column="adbk_no" />
+		<result property="emplNo" column="empl_no" />
+		<result property="adbkEmpl" column="adbk_empl" />
+		<result property="adbkNm" column="adbk_nm" />
+		<result property="adbkCmpny" column="adbk_cmpny" />
+		<result property="adbkDept" column="adbk_dept" />
+		<result property="adbkClsf" column="adbk_clsf" />
+		<result property="adbkEmail" column="adbk_email" />
+		<result property="adbkTelno" column="adbk_telno" />
+		<result property="adbkMemo" column="adbk_memo" />
+		<result property="adbkCode" column="adbk_code" />
+		<result property="emplProflPhoto" column="empl_profl_photo" />
+	</resultMap>
+
+	<resultMap type="addressBookVO" id="selectMap">
+		<result property="adbkNo" column="adbk_no" />
+		<result property="emplNo" column="empl_no" />
+		<result property="adbkEmpl" column="adbk_empl" />
+		<result property="adbkNm" column="adbk_nm" />
+		<result property="adbkCmpny" column="adbk_cmpny" />
+		<result property="adbkDept" column="adbk_dept" />
+		<result property="adbkClsf" column="adbk_clsf" />
+		<result property="adbkEmail" column="adbk_email" />
+		<result property="adbkTelno" column="adbk_telno" />
+		<result property="adbkMemo" column="adbk_memo" />
+		<result property="adbkCode" column="adbk_code" />
+		<result property="adbkGroupNo" column="adbk_group_no" />
+		<result property="adbkGrpNm" column="adbk_grp_nm" />
+		<result property="emplProflPhoto" column="empl_profl_photo" />
+	</resultMap>
+
+	<resultMap type="addressGroupVO" id="addressGroupMap">
+		<result property="adbkGroupNo" column="adbk_group_no" />
+		<result property="emplNo" column="empl_no" />
+		<result property="adbkGrpNm" column="adbk_grp_nm" />
+	</resultMap>
+
+	<resultMap type="addressGroupMappingVO"
+		id="addressGroupMappingMap">
+		<result property="adbkGrpMpngNo" column="adbk_grp_mpng_no" />
+		<result property="adbkNo" column="adbk_no" />
+		<result property="adbkGrpNo" column="adbk_grp_no" />
+	</resultMap>
+
+
+	<!-- 사원주소록 출력 페이징X -->
+	<select id="selectEmployeeAddressList2"
+		resultType="addressBookVO" parameterType="int">
+
+		SELECT
+		ab.ADBK_NO,
+		ab.EMPL_NO,
+		ab.ADBK_EMPL,
+		ab.ADBK_NM,
+		ab.ADBK_CMPNY,
+		c.cmmn_code_name1 AS ADBK_DEPT,
+		clsf.CLSF_NM AS ADBK_CLSF,
+		ab.ADBK_EMAIL,
+		ab.ADBK_TELNO,
+		ab.ADBK_MEMO
+		FROM
+		ADDRESSBOOK ab
+		INNER JOIN
+		COMM_CODE c ON ab.ADBK_DEPT = c.CMMN_CODE
+		INNER JOIN
+		CLASS_OF_POSITION clsf ON ab.ADBK_CLSF = clsf.CLSF_CODE
+		WHERE
+		ab.EMPL_NO = #{emplNo} and ab.ADBK_EMPL is NOT NULL
+		ORDER BY
+		ab.ADBK_NO DESC
+	</select>
+	<!-- 사원 주소록 리스트 출력 페이징O -->
+	<select id="selectEmployeeAddressList" parameterType="pagingVO"
+		resultMap="addressBookMap">
+		SELECT
+		ab.ADBK_NO,
+		ab.EMPL_NO,
+		ab.ADBK_EMPL,
+		ab.ADBK_NM,
+		ab.ADBK_CMPNY,
+		ab.ADBK_DEPT,
+		ab.ADBK_CLSF,
+		ab.ADBK_EMAIL,
+		ab.ADBK_TELNO,
+		ab.ADBK_MEMO,
+		e.empl_profl_photo
+		FROM
+		(
+		SELECT
+		ab.*, row_number() over (order by ab.ADBK_NO desc) rnum
+		FROM
+		ADDRESSBOOK ab
+		WHERE
+		ab.EMPL_NO = #{emplNo} AND ab.ADBK_EMPL IS NOT
+		NULL
+		<include refid="addressSearch" />
+		ORDER BY
+		ab.ADBK_NO DESC
+		) ab
+		JOIN employee e ON ab.ADBK_EMPL = e.EMPL_NO
+		    <![CDATA[
+		    	where  ab.rnum >= #{startRow} AND ab.rnum <= #{endRow}
+		    ]]>
+	</select>
+
+	<!-- 사원 주소록 전체 카운트 -->
+	<select id="totalEmployeeCnt" parameterType="pagingVO"
+		resultType="int">
+		SELECT COUNT(*)
+		FROM addressbook
+		WHERE empl_no = #{emplNo}
+		AND adbk_empl IS NOT NULL
+	</select>
+
+
+	<select id="totalEmployeeCnt2" resultType="int"
+		parameterType="int">
+		SELECT COUNT(*)
+		FROM addressbook
+		WHERE empl_no = #{emplNo}
+		AND adbk_empl IS NOT NULL
+	</select>
+
+	<!-- 개인주소록 그룹 리스트 -->
+	<select id="selectAddressGrpList" resultType="addressGroupVO">
+		<!-- SELECT -->
+		<!-- adbk_group_no -->
+		<!-- ,empl_no -->
+		<!-- ,adbk_grp_nm -->
+		<!-- FROM -->
+		<!-- address_group -->
+		<!-- where empl_no = -->
+		<!-- #{emplNo} -->
+		<!-- order by adbk_group_no -->
+		SELECT
+		ag.adbk_group_no,
+		ag.empl_no,
+		ag.adbk_grp_nm,
+		COUNT(agm.adbk_no) AS
+		cnt
+		FROM
+		address_group ag
+		LEFT JOIN
+		address_group_mapping agm ON
+		ag.adbk_group_no = agm.adbk_grp_no
+		WHERE
+		ag.empl_no = #{emplNo}
+		GROUP BY
+		ag.adbk_group_no,
+		ag.empl_no,
+		ag.adbk_grp_nm
+		ORDER BY
+		ag.adbk_group_no
+	</select>
+
+
+	<!--외부인원 인서트 -->
+	<insert id="insertAddress" parameterType="addressBookVO"
+		useGeneratedKeys="true">
+		<selectKey keyProperty="adbkNo" order="BEFORE"
+			resultType="int">
+			SELECT SEQ_ADDRESSBOOK.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO ADDRESSBOOK (ADBK_NO, EMPL_NO ,ADBK_NM, ADBK_CMPNY,
+		ADBK_DEPT, ADBK_CLSF, ADBK_EMAIL, ADBK_TELNO, ADBK_MEMO)
+		VALUES
+		(#{adbkNo},#{emplNo}, #{adbkNm}, #{adbkCmpny}, #{adbkDept},
+		#{adbkClsf}, #{adbkEmail}, #{adbkTelno}, #{adbkMemo})
+
+	</insert>
+
+	<update id="updateEmplAddress" parameterType="addressBookVO">
+		UPDATE addressbook
+		SET
+		adbk_email = #{adbkEmail},
+		adbk_telno = #{adbkTelno},
+		adbk_memo =
+		#{adbkMemo}
+		WHERE
+		adbk_no = #{adbkNo}
+
+	</update>
+
+	<update id="updatePsAddress" parameterType="addressBookVO">
+		UPDATE addressbook
+		SET
+		adbk_nm = #{adbkNm}
+		,adbk_cmpny = #{adbkCmpny}
+		,adbk_dept = #{adbkDept}
+		,adbk_clsf = #{adbkClsf}
+		,adbk_email = #{adbkEmail}
+		,adbk_telno = #{adbkTelno}
+		,adbk_memo = #{adbkMemo}
+		WHERE
+		adbk_no = #{adbkNo}
+		AND adbk_empl IS NULL
+
+	</update>
+
+	<!-- 개인주소록 맨 위에 있는 그룹 -->
+	<select id="selectGrpNo" resultType="Integer">
+		SELECT
+		MIN(ag.adbk_group_no)
+		AS adbkGroupNo
+		FROM
+		address_group ag
+		WHERE
+		ag.empl_no = #{emplNo}
+	</select>
+
+	<!-- 개인주소록 그룹별 리스트 출력 -->
+	<select id="selectPersonalList" resultMap="selectMap"
+		parameterType="int">
+		SELECT
+		agm.ADBK_GRP_NO,
+		ag.ADBK_GRP_NM,
+		ab.ADBK_NO,
+		ab.EMPL_NO,
+		ab.ADBK_EMPL,
+		ab.ADBK_NM,
+		COALESCE(ab.ADBK_CMPNY, ' ') AS
+		ADBK_CMPNY,
+		COALESCE(ab.ADBK_DEPT, ' ') AS ADBK_DEPT,
+		COALESCE(ab.ADBK_CLSF, ' ') AS ADBK_CLSF,
+		COALESCE(ab.ADBK_EMAIL, ' ') AS ADBK_EMAIL,
+		COALESCE(ab.ADBK_TELNO, ' ') AS ADBK_TELNO,
+		COALESCE(ab.ADBK_MEMO, ' ') AS ADBK_MEMO,
+		e.empl_profl_photo
+		FROM
+		address_group_mapping agm
+		INNER JOIN
+		addressbook
+		ab ON agm.adbk_no =
+		ab.ADBK_NO
+		INNER JOIN
+		address_group ag ON
+		agm.ADBK_GRP_NO =
+		ag.ADBK_GROUP_NO
+		LEFT JOIN
+    	employee e ON ab.ADBK_EMPL = e.EMPL_NO
+		WHERE
+		agm.adbk_grp_no = #{adbkGrpNo}
+		order by ab.adbk_no
+		desc
+
+	</select>
+	
+	<!-- 개인주소록 그룹별 리스트 출력 페이징 시도 -->
+	<select id="searchResultList" resultMap="selectMap" parameterType="pagingVO">
+		SELECT *
+    	FROM (
+	        SELECT
+	            agm.ADBK_GRP_NO,
+	            ag.ADBK_GRP_NM,
+	            ab.ADBK_NO,
+	            ab.EMPL_NO,
+	            ab.ADBK_EMPL,
+	            ab.ADBK_NM,
+	            COALESCE(ab.ADBK_CMPNY, ' ') AS ADBK_CMPNY,
+	            COALESCE(ab.ADBK_DEPT, ' ') AS ADBK_DEPT,
+	            COALESCE(ab.ADBK_CLSF, ' ') AS ADBK_CLSF,
+	            COALESCE(ab.ADBK_EMAIL, ' ') AS ADBK_EMAIL,
+	            COALESCE(ab.ADBK_TELNO, ' ') AS ADBK_TELNO,
+	            COALESCE(ab.ADBK_MEMO, ' ') AS ADBK_MEMO,
+	            ROW_NUMBER() OVER (ORDER BY ab.ADBK_NO DESC) AS rnum
+	        FROM
+	            address_group_mapping agm
+	            INNER JOIN addressbook ab ON agm.adbk_no = ab.ADBK_NO
+	            INNER JOIN address_group ag ON agm.ADBK_GRP_NO = ag.ADBK_GROUP_NO
+	        WHERE
+	            agm.adbk_grp_no = #{adbkGrpNo}
+	            <include refid="addressSearch2" />
+	        ) AS sub
+    	<![CDATA[ WHERE sub.rnum >= #{startRow} AND sub.rnum <= #{endRow} ]]>
+	</select>
+	<!-- 개인주소록 삭제 -->
+	<delete id="deleteAddress" parameterType="addressGroupMappingVO">
+		DELETE FROM address_group_mapping
+		WHERE adbk_grp_no = #{adbkGrpNo}
+		AND
+		adbk_no IN
+		<foreach collection="selectedIds" item="id" open="("
+			separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<!-- 부서주소록 리스트 -->
+	<select id="selectDeptList" parameterType="addressBookVO" resultType="addressBookVO">
+		SELECT
+        ab.ADBK_NO,
+        ab.EMPL_NO,
+        ab.ADBK_EMPL,
+        ab.ADBK_NM,
+        ab.ADBK_CMPNY,
+        ab.ADBK_DEPT,
+        ab.ADBK_CLSF,
+        ab.ADBK_EMAIL,
+        ab.ADBK_TELNO,
+        CASE
+            WHEN ab.adbk_memo IS NULL THEN ' '
+            ELSE ab.adbk_memo
+        END AS ADBK_MEMO,
+        e.empl_profl_photo
+    FROM
+        addressbook ab
+    INNER JOIN
+        employee e ON ab.ADBK_EMPL = e.EMPL_NO
+    WHERE
+        ab.empl_no = #{emplNo}
+        AND ab.adbk_dept IN (
+            SELECT CMMN_CODE_NAME1
+            FROM comm_code
+            WHERE cmmn_code_option1 = #{deptCode}
+        )
+	</select>
+
+	<!-- 부서주소록 행 카운트 -->
+	<select id="deptListCnt" parameterType="addressBookVO"
+		resultType="int">
+		SELECT COUNT(*) AS deptCnt
+		FROM (
+		SELECT
+		ADBK_NO, EMPL_NO,
+		ADBK_EMPL, ADBK_NM, ADBK_CMPNY, ADBK_DEPT, ADBK_CLSF,
+		ADBK_EMAIL,
+		ADBK_TELNO,
+		CASE
+		WHEN ADBK_MEMO IS NULL THEN ' '
+		ELSE ADBK_MEMO
+		END AS
+		ADBK_MEMO
+		FROM
+		ADDRESSBOOK
+		WHERE
+		EMPL_NO = #{emplNo}
+		AND ADBK_DEPT IN (
+		SELECT CMMN_CODE_NAME1
+		FROM COMM_CODE
+		WHERE CMMN_CODE_OPTION1 =
+		#{deptCode}
+		)
+		)
+	</select>
+
+	<select id="selectDeptCodeByCodeName" parameterType="String"
+		resultType="String">
+		select cmmn_code
+		from comm_code
+		where cmmn_code_name1 =
+		#{deptName}
+	</select>
+
+	<!-- 개인주소록 그룹 생성 -->
+	<insert id="createFolder" parameterType="addressGroupVO"
+		useGeneratedKeys="true">
+		<selectKey keyProperty="adbkGroupNo" order="BEFORE"
+			resultType="int">
+			SELECT seq_adbk_group.nextval from dual
+		</selectKey>
+		INSERT INTO ADDRESS_GROUP (ADBK_GROUP_NO, EMPL_NO, adbk_grp_nm)
+		VALUES
+		(SEQ_ADBK_GROUP.nextval, #{emplNo}, #{adbkGrpNm})
+
+	</insert>
+
+	<select id="getMaxGroupNo" resultType="int" parameterType="int">
+		SELECT
+		MAX(ag.adbk_group_no) as adbk_group_no
+		FROM
+		address_group ag
+		WHERE
+		ag.empl_no = #{emplNo}
+	</select>
+	<!-- 외부인원 인서트하면서 그룹에 넣어주기 -->
+	<insert id="addAddressToGroup" parameterType="addressGroupMappingVO">
+		<selectKey keyProperty="adbkGrpMpngNo" resultType="int" order="BEFORE">
+			SELECT SEQ_ADBK_GRMP.nextval FROM DUAL
+		</selectKey>
+		INSERT INTO address_group_mapping (
+		adbk_grp_mpng_no,
+		adbk_grp_no,
+		adbk_no
+		) VALUES (
+		#{adbkGrpMpngNo},
+		#{adbkGrpNo},
+		#{adbkNo}
+		)
+	</insert>
+
+
+	<!-- 그룹이름 수정 -->
+	<update id="modifyFolderName" parameterType="addressGroupVO">
+		UPDATE address_group
+		SET
+		adbk_grp_nm = #{adbkGrpNm}
+		WHERE
+		adbk_group_no = #{adbkGroupNo}
+	</update>
+
+	<!-- 그룹삭제 -->
+	<delete id="deleteFolder" parameterType="addressGroupVO">
+		DELETE
+		FROM address_group
+		WHERE
+		adbk_group_no = #{adbkGroupNo}
+
+	</delete>
+	
+	<insert id="allInsertEmployeeAds" parameterType="int" >
+	INSERT INTO ADDRESSBOOK (ADBK_NO, EMPL_NO, ADBK_EMPL, ADBK_NM, ADBK_CMPNY, ADBK_DEPT, ADBK_CLSF, ADBK_EMAIL, ADBK_TELNO, ADBK_MEMO)
+	SELECT
+	    seq_addressbook.nextval,
+	    #{emplNo}, -- 주소록 액터 사원번호
+	    e.EMPL_NO AS ADBK_EMPL, -- 주소록에 들어갈 사원의 사원번호
+	    e.EMPL_NM AS ADBK_NM,
+	    'Think Link', -- 고정값 'Think Link' 사용
+	    dept.cmmn_code_name1 AS ADBK_DEPT, -- 부서 이름 가져오기
+	    clsf.clsf_nm AS ADBK_CLSF, -- 직급 이름 가져오기
+	    e.EMPL_EMAIL AS ADBK_EMAIL,
+	    e.EMPL_TELNO AS ADBK_TELNO,
+	    NULL -- 메모 필드에 NULL 값 넣기
+	FROM
+	    EMPLOYEE e
+	LEFT JOIN
+	    COMM_CODE dept ON e.DEPT_CODE = dept.CMMN_CODE
+	LEFT JOIN
+	    CLASS_OF_POSITION clsf ON e.CLSF_CODE = clsf.CLSF_CODE
+	
+	</insert>
+	
+	<insert id="addToFolder" parameterType="addressGroupMappingVO">
+		INSERT INTO address_group_mapping (
+	    adbk_grp_mpng_no,
+	    adbk_grp_no,
+	    adbk_no
+	)
+	SELECT 
+	    SEQ_ADBK_GRMP.nextval,
+	    #{adbkGrpNo}, -- 사용자가 선택한 그룹 넘버 
+	    adbk_no
+	FROM 
+	    addressbook
+	WHERE 
+	    adbk_empl = #{adbkEmpl}    -- 넣어줄 사람 emplNo
+	    AND empl_no = #{emplNo}    -- 넣는 사람의 emplNo
+	</insert>
+	
+	<select id="checkGroupMember" parameterType="addressGroupMappingVO" resultType="int">
+		SELECT COUNT(*) FROM address_group_mapping
+		where adbk_grp_no = #{adbkGrpNo}
+		AND adbk_no = (SELECT adbk_no FROM addressbook WHERE adbk_empl = #{adbkEmpl} AND empl_no = #{emplNo})
+	
+	</select>
+	
+	<insert id="addMembersToFolder" parameterType="addressGroupMappingVO">
+    INSERT INTO address_group_mapping (
+        adbk_grp_mpng_no,
+        adbk_grp_no,
+        adbk_no
+    )
+    SELECT
+        SEQ_ADBK_GRMP.nextval,
+        #{adbkGrpNo},
+        adbk_no
+    FROM
+        addressbook
+    WHERE
+        adbk_empl IN
+        <foreach collection="selectedIds" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    AND empl_no = #{emplNo}
+</insert>
+	
+</mapper>

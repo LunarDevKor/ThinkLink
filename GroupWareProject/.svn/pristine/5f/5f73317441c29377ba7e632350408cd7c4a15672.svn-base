@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="kr.or.ddit.groupware.mapper.answer.IAnswerMapper">
+
+<!-- 	<resultMap type="boardVO" id="boardMap"> -->
+<!-- 		<id property="bbscttNo" column="bbsctt_no"/> -->
+<!-- 		<result property="bbscttNo" column="bbsctt_no"/> -->
+<!-- 		<result property="bbsNo" column="bbs_no"/> -->
+<!-- 		<result property="emplNo" column="empl_no"/> -->
+<!-- 		<result property="bbscttTitle" column="bbsctt_title"/> -->
+<!-- 		<result property="bbscttCn" column="bbsctt_cn"/> -->
+<!-- 		<result property="bbscttRdcnt" column="bbsctt_rdcnt"/> -->
+<!-- 		<result property="imprtncYn" column="imprtnc_yn"/> -->
+<!-- 		<result property="delYn" column="del_yn"/> -->
+<!-- 		<result property="atchFileGrpNo" column="atch_file_grp_no"/> -->
+<!-- 		<result property="rgsde" column="rgsde"/> -->
+<!-- 		<result property="register" column="register"/> -->
+<!-- 		<result property="updde" column="updde"/> -->
+<!-- 		<result property="updusr" column="updusr"/> -->
+<!-- 		<collection property="answerList" resultMap="answerMap"/> -->
+<!-- 	</resultMap> -->
+	
+<!-- 	<resultMap type="answerVO" id="answerMap"> -->
+<!-- 		<id property="answerNo" column="answer_no"/> -->
+<!-- 		<result property="answerNo" column="answer_no"/> -->
+<!-- 		<result property="upperAnswerNo" column="upper_answer_no"/> -->
+<!-- 		<result property="emplNo" column="empl_no"/> -->
+<!-- 		<result property="bbscttNo" column="bbsctt_no"/> -->
+<!-- 		<result property="answerDp" column="answer_dp"/> -->
+<!-- 		<result property="replyCn" column="reply_cn"/> -->
+<!-- 		<result property="delYn" column="del_yn"/> -->
+<!-- 		<result property="answerRgsde" column="answer_rgsde"/> -->
+<!-- 		<result property="answerUpdde" column="answer_updde"/> -->
+<!-- 	</resultMap> -->
+
+	<insert id="insertAnswer" parameterType="answerVO" useGeneratedKeys="true">
+	<selectKey keyProperty="answerNo" resultType="int" order="BEFORE">
+		select seq_answer_no.nextval from dual
+	</selectKey>
+		INSERT INTO answer (
+		    answer_no
+		    
+		    , empl_no
+		    , bbsctt_no
+		    , answer_dp
+		    , reply_cn
+		    , del_yn
+		    , answer_rgsde
+		    , answer_updde
+		) VALUES (
+		  	#{answerNo}
+		  
+		  , #{emplNo}
+		  , #{bbscttNo}
+		  , 0
+		  , #{replyCn}
+		  , 'N'
+		  , sysdate
+		  , sysdate
+		)
+	</insert>
+	
+	<select id="selectAnswer"  parameterType="int" resultType="answerVO">
+		SELECT
+		    a.ANSWER_RGSDE,
+		    a.ANSWER_DP,
+		    a.UPPER_ANSWER_NO,
+		    a.BBSCTT_NO,
+		    a.empl_no,
+		    (SELECT EMPL_NM FROM EMPLOYEE e WHERE a.EMPL_NO = e.empl_no) as "answer_nm",
+		    a.ANSWER_UPDDE,
+		    a.REPLY_CN,
+		    a.ANSWER_NO,
+		    a.del_yn,
+		    e.EMPL_PROFL_PHOTO
+		FROM answer a
+		LEFT JOIN EMPLOYEE e ON a.EMPL_NO = e.empl_no
+		WHERE a.bbsctt_no = #{bbscttNo}
+		AND a.del_yn = 'N' 
+		AND a.answer_dp = '0'
+		ORDER BY a.answer_no 
+	</select>
+	
+	<update id="updateAnswer" parameterType="answerVO">
+		update answer
+		set
+			reply_cn = #{replyCn},
+			answer_updde = sysdate
+		where 
+			answer_no = #{answerNo}
+	</update>
+	
+	
+	<update id="deleteAnswer" parameterType="answerVO">
+		update answer
+		set
+			del_yn = 'Y'
+			
+		where 
+			answer_no = #{answerNo}
+	</update>
+	
+	
+	
+	<insert id="insertAnswer2" parameterType="answerVO" useGeneratedKeys="true">
+	<selectKey keyProperty="answerNo" resultType="int" order="BEFORE">
+		select seq_answer_no.nextval from dual
+	</selectKey>
+		INSERT INTO answer (
+		    answer_no
+		    , UPPER_ANSWER_NO
+		    , empl_no
+		    , bbsctt_no
+		    , answer_dp
+		    , reply_cn
+		    , del_yn
+		    , answer_rgsde
+		    , answer_updde
+		) VALUES (
+		  	#{answerNo}
+		  , #{upperAnswerNo}
+		  , #{emplNo}
+		  , #{bbscttNo}
+		  , 1
+		  , #{replyCn}
+		  , 'N'
+		  , sysdate
+		  , sysdate
+		)
+	</insert>
+	
+	<select id="selectReply"  parameterType="int" resultType="answerVO">
+		SELECT
+		    a.ANSWER_RGSDE,
+		    a.ANSWER_DP,
+		    a.UPPER_ANSWER_NO,
+		    a.BBSCTT_NO,
+		    a.empl_no,
+		    (SELECT EMPL_NM FROM EMPLOYEE e WHERE a.EMPL_NO = e.empl_no) as "answer_nm",
+		    a.ANSWER_UPDDE,
+		    CASE WHEN a.DEL_YN = 'Y' THEN '삭제된 댓글입니다' ELSE a.REPLY_CN END as REPLY_CN,
+		    a.ANSWER_NO,
+		    e.EMPL_PROFL_PHOTO,
+		    a.del_yn
+		FROM answer a
+		INNER JOIN EMPLOYEE e ON a.EMPL_NO = e.empl_no
+		WHERE 
+		    a.answer_dp = '1'
+		    AND a.upper_answer_no = #{upperAnswerNo}
+		ORDER BY a.answer_no 
+	</select>
+	
+	<update id="updateReply" parameterType="answerVO">
+		update answer
+		set
+			reply_cn = #{replyCn},
+			answer_updde = sysdate
+		where 
+			answer_no = #{answerNo}
+		and ANSWER_DP = '1'
+	</update>
+	
+	<update id="deleteReply" parameterType="answerVO">
+		update answer
+		set
+			del_yn = 'Y'
+			
+		where 
+			answer_no = #{answerNo}
+	</update>
+	
+	<select id="getBoardWriter" parameterType="answerVO" resultType="answerVO">
+		SELECT
+			a.answer_no,
+		    a.upper_answer_no,
+		    a.empl_no,
+		    emp.EMPL_NM as answer_nm,
+		    a.bbsctt_no,
+		    b.bbsctt_no,
+		    b.EMPL_NO as board_empl_no,
+		    a.answer_dp,
+		    a.reply_cn,
+		    a.del_yn,
+		    a.answer_rgsde,
+		    a.answer_updde,
+		    a.answer_count,
+		    emp.CLSF_CODE,
+		    cls.CLSF_CODE,
+		    cls.CLSF_NM as clsf_nm,
+		    cls.USE_YN,
+		    cls.CLSF_LEVEL,
+		    cls.REGISTER,
+		    cls.UPDDE,
+		    cls.RGSDE,
+		    cls.UPDUSR 
+    
+	FROM ANSWER a
+	LEFT JOIN
+	    EMPLOYEE emp ON a.EMPL_NO = emp.empl_no
+	    
+	LEFT JOIN
+	    CLASS_OF_POSITION cls ON emp.CLSF_CODE = cls.CLSF_CODE
+	    
+	LEFT JOIN
+	    board b ON b.bbsctt_no = a.bbsctt_no 
+	WHERE
+	    b.bbsctt_no = #{bbscttNo}
+	and a.answer_no = #{answerNo} 
+		
+	</select>
+</mapper>

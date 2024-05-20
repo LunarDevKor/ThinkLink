@@ -1,0 +1,449 @@
+@charset "UTF-8";
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap");
+@import "../fonts/tabler-icons/tabler-icons.css";
+@import "../fonts/crypto-icons/cryptocoins.css";
+@import "../fonts/flag-icon-css/flag-icon.min.css";
+
+.side-stick {
+	width: 7px;
+	height: 30px;
+	position: absolute;
+}
+
+.form-control {
+	border: none;
+}
+
+.project-input-title {
+	border-bottom: var(- -bs-border-width) solid #dfe5ef;
+}
+
+.project-input {
+	height: 100%;
+}
+
+.project-page-box {
+	height: 80vh;
+}
+
+.select-color {
+	margin: auto;
+	gap: 10px;
+	justify-content: space-around;
+}
+
+.modal-select-color {
+	width: 300px;
+	max-width: var(- -bs-modal-width);
+	margin-right: auto;
+	margin-left: 450px;
+	margin-top: 190px;
+}
+
+#input-title {
+	margin-left: 15px;
+}
+
+.form-control {
+	color: #3d434d;
+}
+
+.form-horizontal {
+	flex-direction: column;
+	height: 100%;
+}
+
+.form-text-area {
+	flex: 1 0 auto;
+}
+
+.text-area {
+	height: 100%;
+}
+
+.attendees {
+	display: table-cell;
+	vertical-align: top;
+}
+
+.attendees .set_time {
+	border: 1px solid #157efb
+}
+
+.attendees .busy {
+	background-color: rgba(197, 197, 198, .3);
+}
+
+.attendees .attendees_hd {
+	position: relative;
+	height: 50px;
+	margin: 16px 0
+}
+
+.attendees .attendees_hd .critical {
+	position: absolute;
+	top: 0;
+	left: 24px
+}
+
+.attendees .attendees_hd .optional {
+	position: absolute;
+	top: 30px;
+	right: 24px
+}
+
+.attendees .attendees_hd .btn_layer_x {
+	top: -10px;
+	right: 18px
+}
+
+.attendees .attendees_hd .legend .set_time, .attendees .attendees_hd .legend .busy
+	{
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	box-sizing: border-box;
+	vertical-align: middle;
+	margin: 0 4px 0 0
+}
+
+.attendees .attendees_hd .legend li {
+	display: inline-block;
+	margin: 0 0 0 16px
+}
+
+.attendees .attendees_hd .legend li .txt {
+	font-size: 12px;
+	color: #888
+}
+
+.attendees .attendees_hd .current_date {
+	position: static;
+	margin: 0;
+	text-align: left;
+	height: auto;
+}
+
+.attendees .attendees_hd .tit {
+	font-size: 13px;
+	color: #888;
+	margin: 0 0 4px 0
+}
+
+.attendees .attendees_hd .current_date .date {
+	font-size: 17px;
+	cursor: default;
+	margin: 0 8px 0 0
+}
+
+.attendees .attendees_hd .current_date .btn_ic_prev2, .attendees .attendees_hd .current_date .btn_ic_next2
+	{
+	display: inline-block;
+	padding: 2px 8px;
+	cursor: pointer
+}
+
+.attendees .attendees_hd .current_date .btn_ic_prev2:hover, .attendees .attendees_hd .current_date .btn_ic_next2:hover
+	{
+	background-color: #eee;
+	border-radius: 4px
+}
+
+.att_schedule {
+	position: relative;
+	padding: 33px 0 0 0
+}
+
+.att_schedule:before {
+	content: "";
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	z-index: 1;
+	height: 1px;
+	background: red
+}
+
+.att_schedule .att_schedule_hd {
+	display: table;
+	table-layout: fixed;
+	width: 100%;
+	box-sizing: border-box;
+	border-top: 1px solid #ddd;
+	position: absolute;
+	top: 0;
+	left: 0
+}
+
+.att_schedule .att_schedule_hd .tit {
+	display: table-cell;
+	width: 15%
+}
+
+.att_schedule .att_schedule_hd .nav {
+	display: table-cell;
+	position: relative
+}
+
+.att_schedule .att_schedule_hd .tb_info .txt {
+	font-size: 12px;
+	line-height: 32px;
+	font-weight: normal;
+	text-align: center;
+}
+
+.att_schedule .att_schedule_hd .txt {
+	height: 32px;
+}
+
+.att_schedule .wrap_att_schedule_bd {
+	position: relative;
+	border-top: 1px solid #ddd
+}
+
+.att_schedule .att_schedule_bg {
+	display: table;
+	table-layout: fixed;
+	width: 100%;
+	box-sizing: border-box
+}
+
+.att_schedule .att_schedule_bg .tit {
+	display: table-cell;
+	width: 15%
+}
+
+.att_schedule .tb_guide table th, .att_schedule .tb_guide table td {
+	margin: 0;
+	padding: 0
+}
+
+.att_schedule .tb_guide table .txt {
+	border-left: 1px solid #e5e5e6;
+	font-size: 0;
+	line-height: 0
+}
+
+.att_schedule .att_schedule_hd .nav .tb_info {
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+.att_schedule table {
+	table-layout: fixed;
+	width: 100%;
+	border: 0;
+	border-spacing: 0
+}
+
+.att_schedule .tb_guide.grid_event {
+	position: absolute;
+	z-index: 30;
+	top: 0
+}
+
+.att_schedule .tb_guide.grid_event .txt {
+	border: 0 !important
+}
+
+.att_schedul_line {
+	position: absolute;
+	top: 0;
+	left: 15%;
+	right: 0;
+	margin-left: 1px;
+	overflow: hidden
+}
+
+.att_schedul_line .timeline {
+	height: 100%
+}
+
+.att_schedul_line .set_time {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	box-sizing: border-box;
+	font-size: 0;
+	height: 100%;
+	z-index: 20;
+	border: 0
+}
+
+.att_schedul_line .set_time:after {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	border: 1px solid #157efb;
+}
+
+.att_schedul_line .recm_time {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 10;
+	box-sizing: border-box;
+	height: 100%;
+	background: rgba(21, 126, 251, .08);
+	font-size: 0
+}
+
+.att_schedul_line td {
+	position: relative
+}
+
+.att_schedul_line .tb_guide {
+	height: 100%
+}
+
+.att_schedul_line .tb_guide table {
+	height: 100%
+}
+
+.att_schedule .att_schedule_bd {
+	display: table;
+	table-layout: fixed;
+	width: 100%;
+	box-sizing: border-box
+}
+
+.att_schedule .att_schedule_bd .tit {
+	display: table-cell;
+	width: 15%;
+	vertical-align: middle;
+}
+
+.att_schedule .att_schedule_bd .tit p {
+	padding: 0 8px;
+	border-bottom: 1px solid #eee;
+	height: 32px;
+	box-sizing: border-box;
+	line-height: 20px
+}
+
+.att_schedule .att_schedule_bd .tit p .txt {
+	display: inline-block;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 100%;
+	height: 32px;
+	line-height: 32px;
+	font-size: 12px
+}
+
+.att_schedule .att_schedule_bd .timeline {
+	position: relative;
+	display: table-cell
+}
+
+.att_schedule .att_schedule_bd .tb_guide .txt {
+	float: left;
+	width: 50%;
+	height: 32px;
+	box-sizing: border-box;
+	border-bottom: 1px solid #e5e5e6;
+}
+
+.att_schedule .ic_fold {
+	position: relative
+}
+
+.att_schedule .ic_fold .txt:after {
+	content: "";
+	display: inline-block;
+	position: absolute;
+	top: 2px;
+	left: -15px;
+	background: url('../images/ic_svg.svg') no-repeat 0 0;
+	background-size: 100px 100px;
+	width: 26px;
+	height: 30px;
+	cursor: pointer
+}
+
+.att_schedule .ic_folded {
+	position: relative
+}
+
+.att_schedule .ic_folded .txt:after {
+	content: "";
+	display: inline-block;
+	position: absolute;
+	top: 2px;
+	left: -15px;
+	background: url('../images/ic_svg.svg') no-repeat -50px 0;
+	background-size: 100px 100px;
+	width: 26px;
+	height: 30px;
+	cursor: pointer
+}
+
+.att_schedule .att_schedule_bd .busy {
+	background-color: rgba(197, 197, 198, .5)
+}
+
+.ic_svg {
+	display: inline-block;
+	background: url('../images/ic_svg.scg') no-repeat;
+	background-size: 100px;
+}
+
+.attendees .attendees_notice {
+	text-align: center;
+	padding: 120px 0 0 0
+}
+
+.attendees .attendees_notice .txt {
+	color: #888
+}
+
+.attendees .attendees_notice .btn_minor {
+	margin: 16px 0 0 0;
+	padding: 11px 25px 11px;
+}
+
+.attendees .untime {
+	display: none
+}
+
+.schedule_form .wrap_container+.article_reply {
+	margin-top: 40px;
+}
+
+.schedule_form .wrap_container+.article_reply .tab_nav {
+	border-top: 1px solid #ddd;
+}
+
+.schedule_form .article_reply+.tool_bar {
+	border-top: 1px solid #ddd
+}
+.attendees-unavailable {
+  display: none;
+}
+.wrap_time .form-control{
+  padding-left: 0;
+  width: 70px;
+}
+.atendee-elem {
+  display: flex;
+  gap: 8px;
+}
+#attendee-box {
+  display: flex;
+  row-gap: 8px;
+  column-gap: 4px;
+  flex-wrap: wrap;
+}
+
+.att_schedule_bd * {
+	margin : 0;
+}

@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.groupware.mapper.chat.IChatMapper">
+
+	<select id="selectChatList" parameterType="employeeVO" resultType="chatListVO">
+		SELECT
+		    a.empl_no empl_no
+		    , c.clsf_nm clsf_code
+		    , b.cmmn_code_name1 dept_code
+		    , empl_nm
+		    , empl_id
+		    , empl_email
+		    , empl_telno
+		    , empl_profl_photo
+            , (SELECT estbs_cn FROM employee_estbs est WHERE est.empl_no = a.empl_no AND est.estbs_type_code = '3')
+		FROM
+		    employee a
+		INNER JOIN COMM_CODE b on (dept_code = cmmn_code)
+        INNER JOIN CLASS_OF_POSITION c on (a.clsf_code = c.clsf_code)
+		where
+		    enabled= '1' and a.empl_no != #{emplNo}
+		and empl_nm like '%' || #{emplNm} || '%'
+        order by c.clsf_level desc
+	</select>
+	
+	<insert id="createChatGroup" parameterType="messageGroupVO" useGeneratedKeys="true">
+		<selectKey keyProperty="mssagGroupNo" order="BEFORE" resultType="int">
+			select seq_mssag_group.nextval from dual
+		</selectKey>
+		insert into message_group(
+			mssag_group_no
+			, mssag_group_type_code
+			, rgsde
+		)values(
+			#{mssagGroupNo}
+			, #{mssagGroupTypeCode}
+			, sysdate
+		)
+	</insert>
+	
+	<insert id="enterChatGroup" parameterType="messageGroupParticipantVO">
+		insert into message_group_participant(
+			mssag_prtcpnt_no
+			, empl_no
+			, mssag_group_no
+			, mssag_group_nm
+		)values(
+			SEQ_MSSAG_PRTCPNT.nextval
+			, #{emplNo}
+			, #{mssagGroupNo}
+			, #{mssagGroupNm}
+		)
+	</insert>
+	
+	<select id="getEmplName" parameterType="int" resultType="string">
+		select empl_nm
+		from employee
+		where empl_no = #{emplNo}
+	</select>
+	
+	<select id="selectTalkList" parameterType="employeeVO" resultType="messageGroupParticipantVO">
+		SELECT
+		    mssag_prtcpnt_no
+		    , mgp.empl_no
+		    , mgp.mssag_group_no
+		    , mgp.mssag_group_nm
+		    , mssag_cn
+		    , (
+		        SELECT
+		            empl_profl_photo
+		        FROM
+		            employee
+		        WHERE
+		            empl_no = (
+		                SELECT
+		                    a.empl_no
+		                FROM
+		                    message_group_participant   a
+		                    INNER JOIN message_group               b ON a.mssag_group_no = b.mssag_group_no
+		                WHERE
+		                    a.mssag_group_no = mgp.mssag_group_no
+		                    AND empl_no != #{emplNo}
+		                    AND b.mssag_group_type_code = 'M102'
+		            )
+		    ) empl_profl_photo
+		    , to_char((
+		        SELECT
+		            MAX(rgsde)
+		        FROM
+		            message
+		        WHERE
+		            mssag_group_no = mgp.mssag_group_no
+		    ), 'MM-dd HH24:MI') msg_rgsde
+		FROM
+		    message_group_participant   mgp
+		    LEFT OUTER JOIN message m ON ( mgp.mssag_last_read = m.mssag_no )
+		WHERE
+		    mgp.empl_no = #{emplNo}
+		    AND mgp.mssag_group_no IN (
+		        SELECT
+		            mssag_group_no
+		        FROM
+		            message
+		    )
+        <if test="emplNm != null">       
+			and mssag_group_nm like '%' || #{emplNm} || '%'
+        </if>
+	</select>
+	
+	<select id="selectTalk" parameterType="messageGroupParticipantVO" resultType="messageGroupParticipantVO">
+		select
+		    mssag_prtcpnt_no
+		    , mgp.empl_no
+		    , mssag_group_no
+		    , mssag_group_nm
+		    , mssag_last_read
+		    , (select empl_nm from employee ee where ee.empl_no = mgp.empl_no) empl_nm
+		    , (select empl_profl_photo from employee ee where ee.empl_no = mgp.empl_no) empl_profl_photo
+		    , cop.clsf_nm clsf_code
+		    , cc.cmmn_code_name1 dept_code
+		    , (select estbs_cn from employee_estbs est where mgp.empl_no = est.empl_no and est.estbs_type_code = '3') estbs_cn
+		from message_group_participant mgp
+		inner join employee e on (mgp.empl_no = e.empl_no)
+		inner join class_of_position cop on (cop.clsf_code = e.clsf_code)
+		inner join comm_code cc on (cc.cmmn_code = e.dept_code)
+		where mgp.empl_no not in(#{emplNo})
+		and mgp.mssag_group_no = #{mssagGroupNo}
+	</select>
+	
+	<select id="isGroupCreated" parameterType="hashMap" resultType="int">
+	    select 
+			NVL(MAX(CASE WHEN COUNT(*) > 0 THEN mssag_group_no ELSE 0 END), 0) COUNT
+		from 
+		message_group_participant
+		where mssag_group_no IN (
+		    select
+		        a.mssag_group_no
+		    from message_group_participant a
+            inner join message_group b on (a.mssag_group_no = b.mssag_group_no)
+		    where empl_no = #{friendEmplNo}
+            and b.mssag_group_type_code = 'M102'
+		)
+		and empl_no = #{myEmplNo}
+        group by mssag_group_no
+	</select>
+	
+	<select id="isGroupChat" parameterType="int" resultType="int">
+		select count(*)
+		from message_group
+		where mssag_group_no = #{groupNo}
+		and mssag_group_type_code = 'M101'
+	</select>
+	
+	<select id="selectTalkGroup" parameterType="messageGroupParticipantVO" resultType="messageGroupParticipantVO">
+      	select DISTINCT mssag_group_no, mssag_group_nm
+		from message_group_participant
+		where mssag_group_no = #{mssagGroupNo}
+	</select>
+	
+	<insert id="insertMessage" parameterType="messageVO">
+		insert into message(
+			mssag_no
+			, empl_no
+			, mssag_group_no
+			, mssag_cn
+			, atch_file_group_no
+			, rgsde		
+		)values(
+			seq_mssag.nextval
+			, #{emplNo}
+			, #{mssagGroupNo}
+			, #{mssagCn}
+			, #{atchFileGroupNo}
+			, sysdate
+		)
+	</insert>
+	
+	<select id="selectChatHistory" parameterType="messageGroupParticipantVO" resultType="messageVO">
+		SELECT 
+		    mssag_no,
+		    m.empl_no,
+		    e.empl_nm,
+            empl_profl_photo,
+		    mssag_group_no,
+		    mssag_cn,
+		    m.rgsde,
+		    atch_file_group_no,
+		    COUNT(CASE WHEN mssag_no > NVL(mgp.mssag_last_read, 0) THEN 1 ELSE NULL END) AS read_count
+		FROM 
+		    message m
+		LEFT JOIN 
+		    (
+		        SELECT 
+		            NVL(mssag_last_read, 0) AS mssag_last_read
+		        FROM 
+		            message_group_participant
+		        WHERE 
+		            mssag_group_no = #{mssagGroupNo}
+		    ) mgp ON 1=1
+        INNER JOIN employee e on m.empl_no = e.empl_no
+		WHERE 
+		    mssag_group_no = #{mssagGroupNo}
+		GROUP BY 
+		    mssag_no,
+		    m.empl_no,
+		    e.empl_nm,
+            empl_profl_photo,
+		    mssag_group_no,
+		    mssag_cn,
+		    m.rgsde,
+		    atch_file_group_no
+		ORDER BY 
+		    m.rgsde ASC
+	</select>
+	
+	<select id="isExistEstbs" parameterType="employeeEstbsVO" resultType="int">
+		select count(*)
+		from employee_estbs
+		where empl_no = #{emplNo}
+		and estbs_type_code = #{estbsTypeCode}
+	</select>
+	
+	<insert id="insertEstbsCn" parameterType="employeeEstbsVO">
+		insert into employee_estbs(
+			estbs_no
+			, empl_no
+			, estbs_type_code
+			, estbs_cn
+			, estbs_updde
+			, estbs_updusr
+			, estbs_rgdde
+			, estbs_register		
+		)values(
+			seq_employee_estbs.nextval
+			, #{emplNo}
+			, #{estbsTypeCode}
+			, #{estbsCn}
+			, sysdate
+			, #{emplNo}
+			, sysdate
+			, #{emplNo}
+		)
+	</insert>
+	
+	<update id="modifyEstbsCn" parameterType="employeeEstbsVO">
+		update employee_estbs
+		set estbs_cn = #{estbsCn}
+		where empl_no = #{emplNo}
+		and estbs_type_code = #{estbsTypeCode}
+	</update>
+	
+	<select id="selectEstbsCn" parameterType="employeeEstbsVO" resultType="string">
+		select
+			estbs_cn
+		from employee_estbs
+		where empl_no = #{emplNo}
+		and estbs_type_code = #{estbsTypeCode}
+	</select>
+	
+	<select id="selectTalkFileList" parameterType="int" resultType="messageVO">
+		select
+		    af.atch_file_group_no, atch_file_ornl_file_nm, 'C:/upload/message/' || atch_file_nm as mssag_cn, rgsde, atch_file_fancysize
+		from message m left outer join attach_file af on(m.atch_file_group_no = af.atch_file_group_no)
+		where mssag_group_no = #{groupNo}
+		and af.atch_file_group_no > 0
+		group by af.atch_file_group_no, atch_file_ornl_file_nm, atch_file_nm, rgsde, atch_file_fancysize
+		order by 1 desc
+	</select>
+	
+	<update id="updateLastReadCount" parameterType="messageGroupParticipantVO">
+		update message_group_participant
+		set mssag_last_read = 
+		    (
+		        select NVL(MAX(mssag_no), mssag_last_read)
+		        from message
+		        where mssag_group_no = #{mssagGroupNo}
+		    )
+		where mssag_group_no = #{mssagGroupNo}
+		and empl_no = #{emplNo}
+	</update>
+	
+	<select id="getRoomSize" parameterType="int" resultType="int">
+		select COUNT(MSSAG_LAST_READ) CNT
+		from message_group_participant
+		where mssag_group_no = #{mssageGroupNo}
+		AND MSSAG_LAST_READ != 
+		(
+		    select MAX(mssag_no)
+		    from message
+		    where mssag_group_no = #{mssageGroupNo}
+		)
+	</select>
+</mapper>

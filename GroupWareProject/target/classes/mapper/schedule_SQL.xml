@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.groupware.mapper.schedule.IScheduleMapper">
+	
+	<select id="selectScheduleBySchdulNo" parameterType="String" resultType="scheduleVO">
+		SELECT
+		    a.schdul_no,
+		    a.schdul_nm,
+		    a.schdul_bgnde,
+		    a.schdul_endde,
+		    a.schdul_cn,
+		    a.schdul_font_color,
+		    a.schdul_bgrn_color,
+		    a.schdul_place,
+		    a.allday_yn,
+		    b.schdul_type_code,
+		    b.psitn_code
+		FROM
+		    schedule a, sch_group b, sch_group_include c
+		where 
+		    rownum = 1
+    		and a.schdul_no = c.schdul_no
+		    and b.schdul_group_no = c.schdul_group_no
+		    and b.schdul_type_code = a.schdul_type_code
+		    and a.schdul_no = #{schdulNo}
+	</select>
+	
+	<select id="selectScheduleListByEmplNoNDate" parameterType="Map" resultType="scheduleVO">
+		SELECT
+		    a.schdul_no,
+		    schdul_bgnde,
+		    schdul_endde,
+		    allday_yn
+		FROM
+		    schedule a, schdul_participant b
+		where 
+		    a.schdul_no = b.schdul_no
+		    and b.empl_no = #{emplNo}
+		    <![CDATA[ 
+			    and a.schdul_bgnde <= #{bgnde}
+			    and a.schdul_endde >= #{endde}
+		     ]]>
+	
+	</select>
+	<select id="selectSchdulGroupNo" parameterType="Map" resultType="Integer">
+		select schdul_group_no
+		from sch_group
+		where 
+		    schdul_type_code = #{schdulTypeCode}
+		    and psitn_code = #{psitnCode}
+	</select>
+	
+	<insert id="insertSchdulGroup" parameterType="Map">
+		INSERT INTO sch_group (
+		    schdul_group_no,
+		    schdul_type_code,
+		    psitn_code
+		) VALUES (
+		    SEQ_SCHDUL_GROUP.nextval,
+		    #{schdulTypeCode},
+		    #{psitnCode}
+		)
+	</insert>
+	
+	<insert id="insertSchdul" parameterType="Map">
+		<selectKey keyProperty="schdulNo" resultType="int" order="BEFORE">
+			select SEQ_SCHDUL.nextval from dual
+		</selectKey>
+		INSERT INTO schedule (
+		    schdul_no,
+		    schdul_nm,
+		    schdul_bgnde,
+		    schdul_endde,
+		    schdul_cn,
+		    schdul_bgrn_color,
+		    schdul_place,
+		    register,
+		    schdul_type_code
+		) VALUES (
+		    #{schdulNo},
+		    #{schdulNm},
+		    TO_DATE(#{schdulBgnde},'YYYY-MM-DD HH24:MI'),
+		    TO_DATE(#{schdulEndde},'YYYY-MM-DD HH24:MI'),
+		    #{schdulCn},
+		    #{schdulBgrnColor},
+		    #{schdulPlace},
+		    #{register},
+		    #{schdulTypeCode}
+		)
+	</insert>
+	
+	<insert id="insertSchGroupInclude" parameterType="Map">
+		INSERT INTO sch_group_include (
+		    schdul_group_no,
+		    schdul_no
+		) VALUES (
+		    #{schdulGroupNo},
+		    #{schdulNo}
+		)
+	</insert>
+	
+	<insert id="insertSchdulParticipant" parameterType="Map">
+		INSERT INTO schdul_participant (
+		    schdul_no,
+		    empl_no
+		) VALUES (
+		    #{schdulNo},
+		    #{emplNo}
+		)
+	</insert>
+	
+	<select id="selectLowerDept" parameterType="String" resultType="String">
+		SELECT
+		    cmmn_code
+		FROM
+		    comm_code
+		where 
+		    cmmn_code_option1 = #{deptCode}
+		    or cmmn_code = #{deptCode}
+	</select>
+	
+	<select id="selectScheduleList" parameterType="Map" resultType="scheduleVO">
+		SELECT
+		    a.schdul_no,
+		    a.schdul_nm,
+		    a.schdul_bgnde,
+		    a.schdul_endde,
+		    a.schdul_cn,
+		    a.schdul_font_color,
+		    a.schdul_bgrn_color,
+		    a.schdul_place,
+		    a.allday_yn,
+		    b.schdul_type_code,
+		    b.psitn_code
+		FROM
+		    schedule a, sch_group b, sch_group_include c
+		where 
+		    a.schdul_no = c.schdul_no
+		    and b.schdul_group_no = c.schdul_group_no
+		    and b.schdul_type_code = #{schdulTypeCode}
+		    <if test="psitnCode != null and !psitnCode.equals('')">
+			    and b.psitn_code = #{psitnCode}
+		    </if>
+	</select>
+	
+	<select id="selectParticipant" parameterType="String" resultType="int">
+		SELECT
+		    empl_no
+		FROM
+		    schdul_participant
+		where
+		    schdul_no = #{schdulNo}
+	</select>
+	
+	<select id="selectDeptNm" parameterType="String" resultType="String">
+		SELECT
+		    CMMN_CODE_NAME1
+		FROM
+		    comm_code
+		where 
+		    cmmn_code = #{deptCode}
+	</select>
+	
+	<select id="selectProjectNm" parameterType="String" resultType="String">
+		SELECT
+		    prjct_nm
+		FROM
+		    project
+		where
+		    prjct_no = #{prjctNo}
+	</select>
+	
+	<delete id="deleteSchdulParticipant" parameterType="int">
+		DELETE FROM schdul_participant
+		WHERE
+		    schdul_no = #{schdulNo}
+	</delete>
+	
+	<delete id="deleteSchGroupInclude" parameterType="int">
+		DELETE FROM sch_group_include
+		WHERE
+		    schdul_no = #{schdulNo}
+	</delete>
+	
+	<delete id="deleteSchdul" parameterType="int">
+		DELETE FROM schedule
+		WHERE
+		    schdul_no = #{schdulNo}
+	</delete>
+	
+	<select id="getColorCode" parameterType="String" resultType="String">
+		select 
+			cmmn_code_name1
+		from 
+			comm_code
+		where 
+			cmmn_code_name2 = #{bgrnColorName}
+	
+	</select>
+	
+	<update id="updateSchdul" parameterType="Map">
+		UPDATE schedule
+		SET
+		    schdul_nm = #{schdulNm},
+		    schdul_bgnde = TO_DATE(#{schdulBgnde},'YYYY-MM-DD HH24:MI'),
+		    schdul_endde = TO_DATE(#{schdulEndde},'YYYY-MM-DD HH24:MI'),
+		    schdul_cn = #{schdulCn},
+		    schdul_bgrn_color = #{schdulBgrnColor},
+		    schdul_place = #{schdulPlace},
+		    allday_yn = #{alldayYn}
+		WHERE
+		    schdul_no = #{schdulNo}
+	</update>
+	
+</mapper>

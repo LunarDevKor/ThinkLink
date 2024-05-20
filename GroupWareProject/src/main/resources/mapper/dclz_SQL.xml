@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.groupware.mapper.employee.IDclzMapper">
+
+	<select id="countTodaysData" parameterType="String" resultType="int">
+		select count(*)
+		from dclz_status
+		where
+		    to_char(attend_dt,'yyyymmdd') = to_char(sysdate,'yyyymmdd')
+		    and empl_no = #{emplNo}
+	</select>
+	
+	<insert id="insertDclz" parameterType="String">
+		insert into dclz_status (
+		    dclz_no,
+		    empl_no,
+		    attend_dt
+		) values (
+		    SEQ_DCLZ_STATUS.nextval,
+		    #{emplNo},
+		    sysdate
+		)
+	</insert>
+	
+	<update id="updateDclz">
+		update dclz_status
+		set lvffc_dt = sysdate
+		where
+		    empl_no = #{emplNo}
+		    and to_char(attend_dt,'yyyymmdd') = to_char(sysdate,'yyyymmdd')	
+	</update>
+	
+	<select id="selectDclzStatus" parameterType="int" resultType="dclzVO">
+		select 
+		    dclz_no,
+		    empl_no,
+		    attend_dt,
+		    lvffc_dt
+		from dclz_status
+		where
+		    to_char(attend_dt,'yyyymmdd') = to_char(sysdate,'yyyymmdd')
+		    and empl_no = #{emplNo}
+	</select>
+	
+</mapper>

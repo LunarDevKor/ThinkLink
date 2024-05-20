@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.groupware.mapper.attendance.IAttendanceMapper">
+	
+	<resultMap type="dclzStatusVO" id="dclzStatusMap">
+		<result property="dclzNo" column="dclz_no" />
+		<result property="emplNo" column="empl_no" />
+		<result property="attendDt" column="attend_dt" />
+		<result property="dclzPartclrNo" column="dclzPartclrNo" />
+		<result property="beginDt" column="beginDt" />
+		<result property="endDt" column="endDt" />
+		<result property="dclzTypeCode" column="dclzTypeCode" />
+		<result property="dclzNm" column="dclzNm" />
+	</resultMap>
+	
+	<!-- 해당하는 달 출력 -->
+	<select id="selectDclzList" parameterType="dclzStatusVO" resultType="dclzStatusVO">
+		SELECT
+		    a.dclz_no,
+		    a.empl_no,
+		    a.attend_dt,
+		    a.lvffc_dt,
+		    b.DCLZ_PARTCLR_NO as dclzPartclrNo,
+		    b.BEGIN_DT as beginDt,
+		    b.END_DT as endDt,
+		    b.DCLZ_TYPE_CODE as dclzTypeCode,
+		    c.CMMN_CODE_NAME1 as dclzNm
+		FROM
+		    dclz_status a
+		LEFT JOIN
+			DCLZ_PARTICULAR b on a.dclz_no = b.dclz_no
+		LEFT JOIN
+			COMM_CODE c on c.CMMN_CODE = b.DCLZ_TYPE_CODE	
+		WHERE
+		    attend_dt BETWEEN #{firstDay} AND #{lastDay}
+		<if test="emplNo != null and emplNo != ''">
+		AND empl_no = #{emplNo}
+		</if>
+	</select>
+	
+	<update id="updateTime">
+		update dclz_status
+		set attend_dt = #{attendDt},
+		    lvffc_dt = #{lvffcDt}
+		where
+		    dclz_no = #{dclzNo}
+	</update>
+	
+</mapper>

@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.groupware.mapper.drive.IDriveMapper">
+
+	<sql id="mainFilesSQL">
+		SELECT DISTINCT
+            item_no
+            , upper_fldr_no
+		    , item_nm
+		    , item_size
+		    , item_extsn
+		    , item_rgsde
+		    , item_path
+		    , item_type
+		    , del_yn
+		FROM
+		    (
+		        SELECT
+		            a.fldr_no   AS item_no
+		            , a.upper_fldr_no
+		            , fldr_nm     AS item_nm
+		            , nvl((
+		                SELECT
+		                    SUM(c.file_size)
+		                FROM
+		                    drive_file   b
+		                    RIGHT OUTER JOIN drive        c ON c.file_no = b.file_no
+		                WHERE
+		                    b.fldr_no = a.fldr_no
+		            ), 0) AS item_size
+		            , ' ' AS item_extsn
+		            , to_char(fldr_rgsde, 'yyyy-MM-dd') AS item_rgsde
+		            , fldr_path   AS item_path
+		            , 'FOLDER' AS item_type
+		            , a.del_yn
+		        FROM
+		            drive_folder a
+		        WHERE
+		            a.del_yn = 'N'
+				AND
+                    fldr_type = #{fldrType}
+		        <choose>
+		        	<when test="fldrType == 1">
+		        		AND dept_code = #{deptCode}
+		        	</when>
+		        	<when test="fldrType == 2">
+	                	AND empl_no = #{emplNo}
+		        	</when>
+		        </choose>
+		        GROUP BY
+		            a.fldr_no
+		            , a.upper_fldr_no
+		            , fldr_nm
+		            , ' '
+		            , to_char(fldr_rgsde, 'yyyy-MM-dd')
+		            , fldr_path
+		            , 'FOLDER'
+		            , a.del_yn
+		        UNION ALL
+		        SELECT
+		            d.file_no      AS item_no
+		            , nvl(df.fldr_no, 0) AS upper_fldr_no
+		            , d.orgnl_filename AS item_nm
+		            , d.file_size    AS item_size
+		            , d.file_extsn   item_extsn
+		            , to_char(d.file_rgsde, 'yyyy-MM-dd') AS item_rgsde
+		            , d.file_path    AS item_path
+		            , 'FILE' AS item_type
+		            , d.del_yn
+		        FROM
+		            drive_file   df
+		            RIGHT OUTER JOIN drive        d ON d.file_no = df.file_no
+		        WHERE
+		            d.del_yn = 'N'
+		        <choose>
+		        	<when test="fldrType == 2">
+	                	AND empl_no = #{emplNo}
+		        	</when>
+		        </choose>
+		    )
+	</sql>
+	
+	<insert id="saveUploadFile" parameterType="driveVO" useGeneratedKeys="true">
+		<selectKey keyProperty="fileNo" resultType="int" order="BEFORE">
+			select seq_drive.nextval from dual
+		</selectKey>
+		insert into drive(
+			file_no
+			, empl_no
+			, file_nm
+			, orgnl_filename
+			, file_size
+			, file_fancysize
+			, file_mime_type
+			, file_extsn
+			, file_path
+			, file_register
+			, file_rgsde
+			, file_updusr
+			, file_updde
+			, dept_code
+		)values(
+			#{fileNo}
+			, #{emplNo}
+			, #{fileNm}
+			, #{orgnlFilename}
+			, #{fileSize}
+			, #{fileFancysize}
+			, #{fileMimeType}
+			, #{fileExtsn}
+			, #{filePath}
+			, #{fileRegister}
+			, #{fileRgsde}
+			, #{fileUpdusr}
+			, #{fileUpdde}
+			<if test="deptCode != null">
+			, #{deptCode}
+			</if>
+			<if test="deptCode == null">
+			, null
+			</if>
+		)
+	</insert>
+	
+	<insert id="insertFolderFile" parameterType="driveVO">
+		insert into drive_file (
+			file_no
+			, fldr_no
+		)values(
+			#{fileNo}
+			, #{upperFldrNo}
+		)
+	</insert>
+	
+	<select id="searchDrive" parameterType="driveItemVO" resultType="driveItemVO">
+		<include refid="mainFilesSQL"/>
+		WHERE item_nm LIKE '%' || #{searchText} || '%'
+		START WITH
+		    upper_fldr_no = 0
+		CONNECT BY
+		    NOCYCLE PRIOR item_no = upper_fldr_no
+		ORDER SIBLINGS BY
+		    upper_fldr_no
+		    , item_type DESC
+		    , item_no
+	</select>
+	
+	<select id="selectDriveMainFiles" parameterType="driveItemVO" resultType="driveItemVO">
+		<include refid="mainFilesSQL" />
+		START WITH
+		    upper_fldr_no = 0
+		CONNECT BY
+		    NOCYCLE PRIOR item_no = upper_fldr_no
+		ORDER SIBLINGS BY
+		    upper_fldr_no
+		    , item_type DESC
+		    , item_no
+	</select>
+	
+	<insert id="createNewFolder" parameterType="driveFolderVO" useGeneratedKeys="true">
+		<selectKey keyProperty="fldrNo" resultType="int" order="BEFORE">
+			select seq_drive_folder.nextval from dual
+		</selectKey>
+		insert into drive_folder(
+			fldr_no
+			, upper_fldr_no
+			, empl_no
+			, fldr_nm
+			, fldr_path
+			, fldr_type
+			, fldr_register
+			, fldr_rgsde
+			, fldr_updusr
+			, fldr_updde
+			, dept_code
+		)values(
+			#{fldrNo}
+			, #{upperFldrNo}
+			, #{emplNo}
+			, #{fldrNm}
+			, #{fldrPath}
+			, #{fldrType}
+			, #{emplNo}
+			, sysdate
+			, #{emplNo}
+			, sysdate
+			<if test="deptCode != null and fldrType == 1">
+			, #{deptCode}
+			</if>
+			<if test="deptCode == null">
+			, null
+			</if>
+		)
+	</insert>
+	
+	<select id="getFolder" parameterType="string" resultType="driveFolderVO">
+		SELECT DISTINCT 
+			dfldr.fldr_no
+		    , upper_fldr_no
+		    , SUBSTR(SYS_CONNECT_BY_PATH(dfldr.fldr_nm, '/'),2) fldr_nm
+		    , fldr_path
+		    , fldr_type
+		    , dfldr.del_yn
+		FROM
+		    drive_folder   dfldr
+		    LEFT JOIN drive_file     df ON dfldr.fldr_no = df.fldr_no
+		    LEFT OUTER JOIN drive          d ON d.file_no = df.file_no
+		WHERE
+		    fldr_type = #{fldrType}
+		AND dfldr.del_yn = 'N'
+		<if test="fldrType == 1">
+			AND dfldr.dept_code = (select dept_code from employee where empl_no = #{emplNo})
+		</if>
+		<if test="fldrType == 2">
+			AND dfldr.empl_no = #{emplNo}
+		</if>
+		START WITH
+		    dfldr.upper_fldr_no = 0
+		CONNECT BY
+		    PRIOR dfldr.fldr_no = dfldr.upper_fldr_no
+		ORDER SIBLINGS BY
+		    dfldr.fldr_no
+	</select>
+	
+	<select id="isExistInFolder" parameterType="driveItemVO" resultType="int">
+		select count(*)
+		from drive_file
+		where file_no = #{itemNo}
+	</select>
+	
+	<update id="folderMove" parameterType="driveItemVO">
+		update drive_folder
+		set
+			upper_fldr_no = #{upperFldrNo}
+		where fldr_no = #{itemNo}
+	</update>
+	
+	<update id="existFileMove" parameterType="driveItemVO">
+		update drive_file
+		set
+			fldr_no = #{upperFldrNo}
+		where file_no = #{itemNo}
+	</update>
+	
+	<insert id="notExistFileMove" parameterType="driveItemVO">
+		insert into drive_file (
+			file_no
+			, fldr_no		
+		)values(
+			#{itemNo}
+			, #{upperFldrNo}
+		)
+	</insert>
+	
+	<update id="deleteFile" parameterType="integer">
+		update drive
+		set
+			del_yn = 'Y'
+		where file_no = #{fileNo}
+	</update>
+	
+	<update id="deleteFolder" parameterType="integer">
+		update drive_folder
+		set
+			del_yn = 'Y'
+		where fldr_no = #{fldrNo}
+	</update>
+	
+	<update id="editFileName" parameterType="driveItemVO">
+		update drive
+		set
+			orgnl_filename = #{itemNm}
+		where file_no = #{itemNo}
+	</update>
+	
+	<update id="editFolderName" parameterType="driveItemVO">
+		update drive_folder
+		set
+			fldr_nm = #{itemNm}
+		where fldr_no = #{itemNo}	
+	</update>
+	
+	<select id="getFile" parameterType="driveItemVO" resultType="driveVO">
+		select
+			file_no
+			, empl_no
+			, file_nm
+			, orgnl_filename
+			, file_size
+			, file_fancysize
+			, file_mime_type
+			, file_extsn
+			, file_path
+			, file_dwld_co
+			, del_yn
+			, file_register
+			, file_rgsde
+			, file_updusr
+			, file_updde
+			, dept_code
+		from drive
+		where
+			file_no = #{itemNo}
+	</select>
+	
+	<select id="getFoldrOne" parameterType="int" resultType="driveFolderVO">
+		select
+			fldr_no
+			, upper_fldr_no
+			, empl_no
+			, fldr_nm
+			, fldr_path
+			, fldr_type
+			, del_yn
+			, fldr_register
+			, fldr_rgsde
+			, fldr_updusr
+			, fldr_updde
+			, dept_code
+		from drive_folder
+		where
+			fldr_no = #{itemNo}
+	</select>
+	
+	<update id="incrementDownloadCnt" parameterType="driveVO">
+		update drive
+			set
+				file_dwld_co = #{fileDwldCo} + 1
+		where
+			file_no = #{fileNo}
+	</update>
+
+</mapper>

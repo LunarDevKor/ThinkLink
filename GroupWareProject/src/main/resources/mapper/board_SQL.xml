@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="kr.or.ddit.groupware.mapper.board.IBoardMapper">
+
+	<resultMap type="boardVO" id="boardMap">
+		<id property="bbscttNo" column="bbsctt_no"/>
+		<result property="bbscttNo" column="bbsctt_no"/>
+		<result property="bbsNo" column="bbs_no"/>
+		<result property="bbsNm" column="bbs_nm"/>
+		<result property="emplNo" column="empl_no"/>
+		<result property="emplNm" column="empl_nm"/>
+		<result property="bbscttTitle" column="bbsctt_title"/>
+		<result property="bbscttCn" column="bbsctt_cn"/>
+		<result property="bbscttRdcnt" column="bbsctt_rdcnt"/>
+		<result property="imprtncYn" column="imprtnc_yn"/>
+		<result property="delYn" column="del_yn"/>
+		<result property="atchFileGrpNo" column="atch_file_grp_no"/>
+		<result property="rgsde" column="rgsde"/>
+		<result property="register" column="register"/>
+		<result property="updde" column="updde"/>
+		<result property="updusr" column="updusr"/>
+		<result property="rowNum" column="row_num"/>
+		<result property="answerCount" column="answer_count"/>
+		<result property="emplProflPhoto" column="EMPL_PROFL_PHOTO"/>
+		<collection property="answerList" resultMap="answerMap"/>
+	</resultMap>
+	
+	<resultMap type="answerVO" id="answerMap">
+		<id property="answerNo" column="answer_no"/>
+		<result property="answerNo" column="answer_no"/>
+		<result property="upperAnswerNo" column="upper_answer_no"/>
+		<result property="emplNo" column="empl_no"/>
+		<result property="answerNm" column="answer_nm"/>
+		<result property="bbscttNo" column="bbsctt_no"/>
+		<result property="answerDp" column="answer_dp"/>
+		<result property="replyCn" column="reply_cn"/>
+		<result property="delYn" column="del_yn"/>
+		<result property="answerRgsde" column="answer_rgsde"/>
+		<result property="answerUpdde" column="answer_updde"/>
+	</resultMap>
+
+	<sql id="boardSearch">
+		<if test="searchType != null and searchType == 'title'">
+			and (bbsctt_title like '%'||#{searchWord}||'%' )
+		</if>
+		<if test="searchType != null and searchType == 'writer'">
+			 and c.EMPL_NO IN (SELECT EMPL_NO FROM EMPLOYEE WHERE EMPL_NM LIKE '%'||#{searchWord}||'%')
+		</if>
+		
+	</sql>
+	
+	<select id="selectBoardList" parameterType="pagingVO"
+		resultType="BoardVO">
+		select
+			b.*
+		from(
+			select
+				a.*, row_number() over(order by a.BBSCTT_NO desc)rnum
+			from(
+				select
+			 		c.BBSCTT_NO
+		            , c.bbs_no
+		            , (select bbs_nm from board_category d where c.bbs_no = d.bbs_no) as "bbs_nm"
+		            , (select EMPL_NM FROM EMPLOYEE e WHERE c.EMPL_NO = e.empl_no) as "empl_nm"
+		            , e.EMPL_PROFL_PHOTO
+		            , c.BBSCTT_TITLE
+		            , c.BBSCTT_CN
+		            , c.BBSCTT_RDCNT
+		            , c.IMPRTNC_YN
+		            , c.DEL_YN
+		            , c.ATCH_FILE_GRP_NO
+		            , c.RGSDE
+		            , c.REGISTER
+		            , c.UPDDE
+		            , c.UPDUSR
+		            , (SELECT COUNT(*) AS 댓글수
+                    FROM ANSWER g
+                    where g.bbsctt_no = c.bbsctt_no
+                    and del_yn = 'N')as answer_count
+				from board c
+				LEFT JOIN EMPLOYEE e ON c.EMPL_NO = e.empl_no
+				where del_yn = 'N'
+        		and bbs_no = #{bbsNo}
+        		<include refid="boardSearch"/>
+        		order by BBSCTT_NO desc
+				) a
+			) b
+    <![CDATA[
+        where b.rnum >= #{startRow} and b.rnum <= #{endRow}
+    ]]>
+	</select>
+
+	<select id="mainBoardList" resultType="BoardVO">
+		SELECT *
+FROM (
+    SELECT 
+        A.*,
+        ROW_NUMBER() OVER(ORDER BY CASE WHEN A.IMPRTNC_YN = 'Y' THEN 1 ELSE 2 END, A.RGSDE DESC) AS RN
+    FROM (				
+        -- 1 DEPTH
+        SELECT 
+            BBSCTT_NO
+            , BBS_NO
+            , EMPL_NO
+            , BBSCTT_TITLE
+            , BBSCTT_CN
+            , BBSCTT_RDCNT
+            , IMPRTNC_YN
+            , DEL_YN
+            , ATCH_FILE_GRP_NO
+            , RGSDE
+            , UPDDE
+            , REGISTER
+            , UPDUSR
+        FROM board
+        WHERE bbs_no = 1
+        and del_yn = 'N'
+    ) A
+) B
+<![CDATA[
+	WHERE B.RN <= 5  
+]]>
+
+	</select>
+
+	<select id="selectBoard" parameterType="int"
+		resultMap="boardMap">
+		SELECT
+		    a.bbsctt_no
+		  , a.bbs_no
+		  , (select bbs_nm from board_category c where a.bbs_no = c.bbs_no) as "bbs_nm"
+		  , a.empl_no
+		  , a.bbsctt_title
+		  , a.bbsctt_cn
+		  , a.bbsctt_rdcnt
+		  , a.imprtnc_yn
+		  , a.del_yn
+		  , a.atch_file_grp_no
+		  , a.rgsde
+		  , a.register
+		  , a.updde
+		  , a.updusr
+		  , b.ANSWER_RGSDE
+		  , b.ANSWER_DP
+		  , b.UPPER_ANSWER_NO
+		  , b.BBSCTT_NO
+		  ,(select EMPL_NM FROM EMPLOYEE e WHERE b.EMPL_NO = e.empl_no) as "answer_nm"
+		  ,(select EMPL_NM FROM EMPLOYEE e WHERE a.EMPL_NO = e.empl_no) as "empl_nm"
+		  , e.EMPL_PROFL_PHOTO
+		  , b.DEL_YN as "answer_del_yn"
+		  , b.ANSWER_UPDDE
+		  , b.REPLY_CN
+		  , b.ANSWER_NO
+		FROM
+		    board a
+		LEFT OUTER JOIN
+		    answer b ON (a.bbsctt_no = b.bbsctt_no)
+		LEFT JOIN EMPLOYEE e ON (a.EMPL_NO = e.empl_no)
+		WHERE
+		    a.bbsctt_no = #{bbscttNo}
+        
+        order by answer_no
+	</select>
+
+	<select id="selectBoardCount" parameterType="int" resultType="int">
+		select count(BBSCTT_NO)
+		from board c
+		where 1=1
+		<include refid="boardSearch"/>
+	</select>
+	
+	<select id="answerCount" parameterType="int" resultType="int">
+		SELECT COUNT(*) AS 댓글수
+		FROM ANSWER
+		where bbsctt_no = #{bbscttNo}
+		and del_yn = 'N'
+	</select>
+
+	<insert id="insertBoard" parameterType="boardVO"
+		useGeneratedKeys="true">
+		<selectKey keyProperty="bbscttNo" resultType="int"
+			order="BEFORE">
+			select seq_bbsctt.nextval from dual
+		</selectKey>
+
+		insert into board(
+		BBSCTT_NO
+		, BBS_NO
+		, EMPL_NO
+		, BBSCTT_TITLE
+		, BBSCTT_CN
+		,BBSCTT_RDCNT
+		, IMPRTNC_YN
+		,DEL_YN
+		, ATCH_FILE_GRP_NO
+		, RGSDE, REGISTER
+		,UPDDE, UPDUSR
+		) values (
+		#{bbscttNo}, -- 새로운 보드 번호
+		#{bbsNo}, -- 보드 카테고리번호 (부모 키)
+		#{emplNo}, -- 직원 번호
+		#{bbscttTitle}, -- 보드 제목
+		#{bbscttCn}, -- 보드내용
+		#{bbscttRdcnt}, -- 조회 수
+		COALESCE(#{imprtncYn}, 'N'),
+		'N', -- 삭제 여부를 기본값'N'으로 설정
+		#{atchFileGrpNo}, -- 첨부 파일 그룹 번호
+		sysdate, -- 등록일
+		#{register}, --등록자
+		sysdate, -- 수정일
+		#{updusr} -- 수정자
+		)
+	</insert>
+
+	<update id="updateBoard" parameterType="boardVO">
+	    UPDATE board
+	    SET
+	        bbsctt_title = #{bbscttTitle},
+	        bbsctt_cn = #{bbscttCn},
+	        bbsctt_rdcnt = #{bbscttRdcnt},
+	       	updde = sysdate,	
+	        updusr = #{emplNo}
+	        <if test="atchFileGrpNo != 0">
+	        	, ATCH_FILE_GRP_NO = #{atchFileGrpNo}
+	        </if>
+	    WHERE
+	        BBSCTT_NO = #{bbscttNo}
+	</update>
+
+	<update id="deleteBoard" parameterType="boardVO">
+		update board
+		set
+		del_yn =
+		'Y'
+		where BBSCTT_NO = #{bbscttNo} AND DEL_YN = 'N'
+
+	</update>
+	
+	<update id="incremenHit" parameterType="int">
+		update board
+		set
+			BBSCTT_RDCNT = BBSCTT_RDCNT +1
+		where BBSCTT_NO =#{bbscttNo}
+	</update>
+	
+	<select id="selectFileInfo" parameterType="int" resultType="attachFileVO">
+		select
+		    atch_file_no
+		  , atch_file_group_no
+		  , atch_file_nm
+		  , atch_file_ornl_file_nm
+		  , atch_file_size
+		  , atch_file_fancysize
+		  , atch_file_extsn
+		  , atch_file_date
+		  , atch_file_path
+		FROM attach_file
+		where atch_file_no = #{atchFileNo}
+	</select>
+	
+	<select id="selectAtchFileGroupNo" parameterType="int" resultType="attachFileVO">
+	    select
+	    atch_file_no, atch_file_group_no, atch_file_nm, atch_file_ornl_file_nm, atch_file_size, atch_file_fancysize, atch_file_extsn, atch_file_date, atch_file_path
+	    from attach_file
+	    where atch_file_group_no = #{atchFileGrpNo}
+	</select>
+	
+	<select id="getType" parameterType="int" resultType="boardVO">
+	
+		SELECT
+		    bbsctt_no
+		  , (select bbs_nm from board_category c where a.bbs_no = c.bbs_no) as "bbs_nm"
+		  , empl_no
+		  , bbsctt_title
+		  
+		  , bbsctt_rdcnt
+		  , imprtnc_yn
+		  , del_yn
+		  , atch_file_grp_no
+		  , rgsde
+		  , register
+		  , updde
+		  , updusr
+		  
+		FROM board a
+		where bbs_no = #{bbsNo}
+	</select>
+	
+	<select id="getBoardCntChart" parameterType="boardVO" resultType="boardVO">
+		SELECT
+		    '공지사항'           bbs_nm,
+		    COUNT(bbsctt_no) count
+		FROM
+		    board
+		WHERE
+		    bbs_no = 1
+		UNION ALL
+		SELECT
+		    '전사게시판'          bbs_nm,
+		    COUNT(bbsctt_no) count
+		FROM
+		    board
+		WHERE
+		    bbs_no = 2
+		UNION ALL
+		SELECT
+		    '부서게시판'          bbs_nm,
+		    COUNT(bbsctt_no) count
+		FROM
+		    board
+		WHERE
+		    bbs_no = 3
+	</select>
+	
+	<select id="getAnswerCntChart" parameterType="boardVO" resultType="boardVO">
+		SELECT
+		    '공지사항'           bbs_nm,
+		    COUNT(answer_no) count
+		FROM
+		         answer a
+		    INNER JOIN board b ON a.bbsctt_no = b.bbsctt_no
+		WHERE
+		        bbs_no = 1
+		    AND a.del_yn = 'N'
+		    AND b.del_yn = 'N'
+		UNION ALL
+		SELECT
+		    '전사게시판'          bbs_nm,
+		    COUNT(answer_no) count
+		FROM
+		         answer a
+		    INNER JOIN board b ON a.bbsctt_no = b.bbsctt_no
+		WHERE
+		        bbs_no = 2
+		    AND a.del_yn = 'N'
+		    AND b.del_yn = 'N'
+		UNION ALL
+		SELECT
+		    '부서게시판'          bbs_nm,
+		    COUNT(answer_no) count
+		FROM
+		         answer a
+		    INNER JOIN board b ON a.bbsctt_no = b.bbsctt_no
+		WHERE
+		        bbs_no = 3
+		    AND a.del_yn = 'N'
+		    AND b.del_yn = 'N'
+	</select>
+	
+	<select id="getTopFiveBoardViewChart" parameterType="boardVO" resultType="boardVO">
+		SELECT
+		    r.*
+		FROM
+		    (
+		        SELECT
+		            bbsctt_rdcnt,
+		            bbsctt_title,
+                    empl_nm
+		        FROM
+		                 board
+		            INNER JOIN employee e ON e.empl_no = board.empl_no
+		        WHERE
+		            del_yn = 'N'
+		        ORDER BY
+		            bbsctt_rdcnt DESC
+		    ) r
+		WHERE
+		<![CDATA[
+		    ROWNUM <= 5
+		]]>
+	</select>
+	
+	<select id="getHoursBoardWritingChart" parameterType="boardVO" resultType="boardVO">
+		SELECT
+		    hours.hour_of_day,
+		    nvl(board_counts.board_count, 0) AS count
+		FROM
+		    (
+		        SELECT
+		            to_char(level - 1, 'FM00') AS hour_of_day
+		        FROM
+		            dual
+		        CONNECT BY
+		        <![CDATA[
+		            level - 1 < 24
+		        ]]>
+		    ) hours
+		    LEFT JOIN (
+		        SELECT
+		            to_char(rgsde, 'HH24') AS hour_of_day,
+		            COUNT(*)               AS board_count
+		        FROM
+		            board
+		        GROUP BY
+		            to_char(rgsde, 'HH24')
+		    ) board_counts ON hours.hour_of_day = board_counts.hour_of_day
+		ORDER BY
+		    hours.hour_of_day
+	</select>
+</mapper>

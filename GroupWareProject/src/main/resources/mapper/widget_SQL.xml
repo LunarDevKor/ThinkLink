@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.groupware.mapper.widget.IWidgetMapper">
+	
+	<select id="isExistWidgetData" parameterType="int" resultType="int">
+		select count(*)
+		from widget
+		where empl_no = #{emplNo}
+	</select>
+	
+	<select id="getWidgetsTitle" resultType="widgetVO">
+		select 
+			cmmn_code widg_code
+			, cmmn_code_name1 widg_name
+			, cmmn_code_name2 widg_eng_name
+		from comm_code
+		where cmmn_group_code = 'A1'
+	</select>
+	
+	<insert id="insertDefaultWidget" parameterType="widgetVO">
+		insert into widget(
+			widg_no
+			, empl_no
+			, widg_x
+			, widg_y
+			, widg_w
+			, widg_h
+			, widg_code
+		)values(
+			seq_widget.nextval
+			, #{emplNo}
+			, #{widgX}
+			, #{widgY}
+			, #{widgW}
+			, #{widgH}
+			, #{widgCode}
+		)
+	</insert>
+
+	<select id="selectWidgetList" parameterType="int" resultType="widgetVO">
+		select 
+			widg_no
+			, empl_no
+			, widg_x
+			, widg_y
+			, widg_w
+			, widg_h
+			, widg_code
+			, w.use_yn	
+            , cmmn_code_name1 widg_name
+            , cmmn_code_name2 widg_eng_name
+		from widget w
+        left outer join comm_code on (widg_code = cmmn_code)
+		where empl_no = #{emplNo}
+		order by widg_code asc
+	</select>
+	
+	<update id="saveWidgetLayout" parameterType="widgetVO">
+		update widget
+		set 
+			widg_x = #{widgX}
+			, widg_y = #{widgY}
+			, widg_w = #{widgW}
+			, widg_h = #{widgH}
+		where empl_no = #{emplNo}
+		and widg_code = #{widgCode}
+	</update>
+	
+	<update id="updateWidgetUseYn" parameterType="widgetVO">
+		update widget
+		set
+			use_yn = #{useYn}
+		where empl_no = #{emplNo}
+		and widg_code = #{widgCode}
+	</update>
+	
+</mapper>

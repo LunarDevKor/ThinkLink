@@ -1,0 +1,146 @@
+@charset "UTF-8";
+
+.prjct-content{
+  display: flex;
+  max-height: 900px;
+}
+
+.prjct-tab .nav-item {
+  width: 100px;
+}
+.prjct-tab .nav-item .nav-link {
+  display: flex;
+  justify-content: center;
+}
+
+#task-status-chart {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.chart {
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.report-detail-info{
+  margin-left: 50px;
+  margin-top: 20px;
+}
+
+
+.side-stick {
+  width: 3px;
+  height: 20px;
+  /* position: absolute; */
+  margin-right: 10px;
+}
+
+.btn-prjct{
+  display: flex;
+  align-items: center;
+}
+
+.btn-prjct .nav-link{
+  padding: 5px;
+  /* margin-left: 5px; */
+}
+
+
+.task-detail-title {
+  margin: 10px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.task-detail-title h5 {
+  margin: 0;
+}
+
+.task-detail-title .side-stick {
+  position: relative;
+  width: 3px;
+  height: 20px;
+  margin-left: 20px;
+  margin-right: 10px;
+}
+
+.modal-task-detail {
+  width: 30vw;
+  max-width: none;
+  height: calc(100vh - 160px);
+  margin-top: 100px;
+  margin-right: 50px;
+}
+
+.modal-task-detail .modal-content {
+  height: 100%;
+  padding-right: 10px;
+}
+
+.task-detail-info-elem {
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.task-detail-info-elem > i,img {
+  width: 30px;
+  display: flex;
+  justify-content: center;
+}
+
+.no-border {
+  border-width: 0;
+}
+
+.no-border:focus {
+  outline: none;
+}
+
+select option[value=""][disabled] {
+	display: none;
+}
+
+input[type='date']::before {
+  content: attr(data-placeholder);
+  width: 100%;
+  position: absolute;
+  background-color: white;
+}
+
+input[type='date']:focus::before,
+input[type='date']:valid::before {
+  display: none;
+}
+
+.form-date-task {
+  height: 39px;
+}
+
+input[type=date]::before::-webkit-datetime-edit-text {
+  -webkit-appearance: none;
+  display: none;
+}
+input[type=date]::before::-webkit-datetime-edit-month-field{
+  -webkit-appearance: none;
+  display: none;
+}
+input[type=date]::before::-webkit-datetime-edit-day-field {
+  -webkit-appearance: none;
+  display: none;
+}
+input[type=date]::before::-webkit-datetime-edit-year-field {
+  -webkit-appearance: none;
+  display: none;
+}
+
+input[type="date"]::before::-webkit-calendar-picker-indicator{
+  opacity:0;
+  height: 0;
+  z-index: 1;
+  cursor: pointer;
+}
