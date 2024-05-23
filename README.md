@@ -3,9 +3,7 @@
 > ### *개발기간 및 팀구성*
 - 개발 기간 : 2024-03-18 ~ 2024-05-17
 - 팀구성 : 이명문(PL) 권예은(TA) 최소희(AA) 이영주(UA) 민경선(DA) 최윤서(QA)
-
 <br/>
-
 > ### *Overview*
 *오프라인 업무를 온라인으로 전환하는 그룹웨어 웹서비스*
 
@@ -27,11 +25,10 @@
 > ### *최윤서*
 - 내용1
   
-<div align=>
-	# 📚 기술 스택
-	<br/>
-	# ✨ Framework & Languages ✨
-</div>
+
+# 📚 기술 스택
+<br/>
+# ✨ Framework & Languages ✨
 <div align="">
 	<img src="https://img.shields.io/badge/Java-007396?style=flat&logo=Conda-Forge&logoColor=white" />
 	<img src="https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=HTML5&logoColor=white" />
