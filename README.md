@@ -16,7 +16,7 @@
 	<img src="https://img.shields.io/badge/Oracle-F80000?style=flat&logo=Oracle&logoColor=white" />
 	<br>
 	<img src="https://img.shields.io/badge/Redmine-B32024?style=flat&logo=Redmine&logoColor=white" />
-	<img src="https://img.shields.io/badge/Oracle%20SQL-F80000?style=flat&logo=Github&logoColor=white" />
+	<img src="https://img.shields.io/badge/Subversion-809CC9?style=flat&logo=Subversion&logoColor=white" />
 </div>
 <br>
 <div align=center>
