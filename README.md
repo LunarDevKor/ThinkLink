@@ -1,7 +1,7 @@
 <img src="https://capsule-render.vercel.app/api?type=waving&color=auto&height=200&section=header&text=ThinkLink&fontSize=100" />
-### *개발기간 및 팀구성
--개발기간 : 2024-03-18 ~ 2024-05-17
--팀구성 : 이명문(PL) 권예은(TA) 최소희(AA) 이영주(UA) 민경선(DA) 최윤서(QA)
+> ### *개발기간 및 팀구성*
+- 개발기간 : 2024-03-18 ~ 2024-05-17
+- 팀구성 : 이명문(PL) 권예은(TA) 최소희(AA) 이영주(UA) 민경선(DA) 최윤서(QA)
 <div align=center>
 	<h3>📚 기술 스택 📚</h3>
 	<p>✨ Framework & Languages ✨</p>
