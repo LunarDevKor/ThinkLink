@@ -1,7 +1,7 @@
 <img src="https://capsule-render.vercel.app/api?type=waving&color=auto&height=200&section=header&text=ThinkLink&fontSize=100" />
 <div align=center>
 	<h3>📚 기술 스택 📚</h3>
-	<p>✨ Platforms & Languages ✨</p>
+	<p>✨ Framework & Languages ✨</p>
 </div>
 <div align="center">
 	<img src="https://img.shields.io/badge/Java-007396?style=flat&logo=Conda-Forge&logoColor=white" />
